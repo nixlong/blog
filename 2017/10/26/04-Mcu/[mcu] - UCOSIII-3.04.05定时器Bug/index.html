@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+    <meta charset="utf-8">
+    
+    <title>UCOSIII-v3.04.05 定时器Bug | I&#39;m Long</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="#UCOSIII-v3.04.05 定时器Bug [TOC] 0. 异常发生移植Dthing 到UCOSIII-v3.04.05, 使用UCOS定时器作为调度时标支持. 涉及到定时器接口: 123456789void  OSTmrCreate (OS_TMR               *p_tmr,                   CPU_CHAR             *p_name,">
+<meta name="keywords" content="ucosiii,timer">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UCOSIII-v3.04.05 定时器Bug">
+<meta property="og:url" content="http://yoursite.com/2017/10/26/04-Mcu/[mcu] - UCOSIII-3.04.05定时器Bug/index.html">
+<meta property="og:site_name" content="I&#39;m Long">
+<meta property="og:description" content="#UCOSIII-v3.04.05 定时器Bug [TOC] 0. 异常发生移植Dthing 到UCOSIII-v3.04.05, 使用UCOS定时器作为调度时标支持. 涉及到定时器接口: 123456789void  OSTmrCreate (OS_TMR               *p_tmr,                   CPU_CHAR             *p_name,">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="http://otfz8unl1.bkt.clouddn.com/markdown/171031/43LFEFGHeL.png">
+<meta property="og:updated_time" content="2017-10-31T06:05:26.006Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="UCOSIII-v3.04.05 定时器Bug">
+<meta name="twitter:description" content="#UCOSIII-v3.04.05 定时器Bug [TOC] 0. 异常发生移植Dthing 到UCOSIII-v3.04.05, 使用UCOS定时器作为调度时标支持. 涉及到定时器接口: 123456789void  OSTmrCreate (OS_TMR               *p_tmr,                   CPU_CHAR             *p_name,">
+<meta name="twitter:image" content="http://otfz8unl1.bkt.clouddn.com/markdown/171031/43LFEFGHeL.png">
+    
+
+    
+
+    
+
+    <link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/libs/open-sans/styles.css">
+    <link rel="stylesheet" href="/libs/source-code-pro/styles.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+
+    <script src="/libs/jquery/2.1.3/jquery.min.js"></script>
+    
+    
+        <link rel="stylesheet" href="/libs/lightgallery/css/lightgallery.min.css">
+    
+    
+        <link rel="stylesheet" href="/libs/justified-gallery/justifiedGallery.min.css">
+    
+    
+    
+    
+
+
+</head>
+
+<body>
+    <div id="container">
+        <header id="header">
+    <div id="header-main" class="header-inner">
+        <div class="outer">
+            <a href="/" id="logo">
+                
+                <span class="site-title">I&#39;m Long</span>
+            </a>
+            <nav id="main-nav">
+                
+                    <a class="main-nav-link" href="/">Home</a>
+                
+                    <a class="main-nav-link" href="/archives/">Archives</a>
+                
+                    <a class="main-nav-link" href="/categories/">Categories</a>
+                
+                    <a class="main-nav-link" href="/about">About</a>
+                
+            </nav>
+            
+                
+                <nav id="sub-nav">
+                    <div class="profile" id="profile-nav">
+                        <a id="profile-anchor" href="javascript:;">
+                            <img class="avatar" src="http://otfz8unl1.bkt.clouddn.com/markdown/170815/2LlFGLFh3C.png" />
+                            <i class="fa fa-caret-down"></i>
+                        </a>
+                    </div>
+                </nav>
+            
+            <div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="Search" />
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="Type something..." />
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: 'Posts',
+            PAGES: 'Pages',
+            CATEGORIES: 'Categories',
+            TAGS: 'Tags',
+            UNTITLED: '(Untitled)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+</div>
+        </div>
+    </div>
+    <div id="main-nav-mobile" class="header-sub header-inner">
+        <table class="menu outer">
+            <tr>
+                
+                    <td><a class="main-nav-link" href="/">Home</a></td>
+                
+                    <td><a class="main-nav-link" href="/archives/">Archives</a></td>
+                
+                    <td><a class="main-nav-link" href="/categories/">Categories</a></td>
+                
+                    <td><a class="main-nav-link" href="/about">About</a></td>
+                
+                <td>
+                    
+    <div class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="Search" />
+    </div>
+
+                </td>
+            </tr>
+        </table>
+    </div>
+</header>
+
+        <div class="outer">
+            
+                
+
+<aside id="profile">
+    <div class="inner profile-inner">
+        <div class="base-info profile-block">
+            <img id="avatar" src="http://otfz8unl1.bkt.clouddn.com/markdown/170815/2LlFGLFh3C.png" />
+            <h2 id="name">nix.long</h2>
+            <h3 id="title">The Coder</h3>
+            <span id="location"><i class="fa fa-map-marker"></i>ChengDu, China</span>
+            <a id="follow" target="_blank" href="https://github.com/nixlong/">FOLLOW</a>
+        </div>
+        <div class="article-info profile-block">
+            <div class="article-info-block">
+                11
+                <span>posts</span>
+            </div>
+            <div class="article-info-block">
+                20
+                <span>tags</span>
+            </div>
+        </div>
+        
+    </div>
+</aside>
+
+            
+            <section id="main"><article id="post-04-Mcu/[mcu] - UCOSIII-3.04.05定时器Bug" class="article article-type-post" itemscope itemprop="blogPost">
+    <div class="article-inner">
+        
+            
+	
+		<img src="http://otfz8unl1.bkt.clouddn.com/markdown/171031/43LFEFGHeL.png" class="article-banner" />
+	
+
+
+
+        
+        
+            <header class="article-header">
+                
+    
+        <h1 class="article-title" itemprop="name">
+            UCOSIII-v3.04.05 定时器Bug
+        </h1>
+    
+
+                
+                    <div class="article-meta">
+                        
+    <div class="article-date">
+        <i class="fa fa-calendar"></i>
+        <a href="/2017/10/26/04-Mcu/[mcu] - UCOSIII-3.04.05定时器Bug/">
+            <time datetime="2017-10-26T10:00:00.000Z" itemprop="datePublished">2017-10-26</time>
+        </a>
+    </div>
+
+
+                        
+    <div class="article-category">
+    	<i class="fa fa-folder"></i>
+        <a class="article-category-link" href="/categories/MCU/">MCU</a>
+    </div>
+
+                        
+    <div class="article-tag">
+        <i class="fa fa-tag"></i>
+        <a class="tag-link" href="/tags/timer/">timer</a>, <a class="tag-link" href="/tags/ucosiii/">ucosiii</a>
+    </div>
+
+                    </div>
+                
+            </header>
+        
+        
+        <div class="article-entry" itemprop="articleBody">
+        
+            
+                <div id="toc" class="toc-article">
+                <strong class="toc-title">Catalogue</strong>
+                    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#0-异常发生"><span class="toc-number">1.</span> <span class="toc-text">0. 异常发生</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-原因在哪"><span class="toc-number">2.</span> <span class="toc-text">1. 原因在哪?</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-2-真相终于浮出水面"><span class="toc-number">2.1.</span> <span class="toc-text">1.2 真相终于浮出水面</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-解决方案"><span class="toc-number">3.</span> <span class="toc-text">2.解决方案</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-新版本还有bug吗"><span class="toc-number">4.</span> <span class="toc-text">3.新版本还有bug吗</span></a></li></ol>
+                </div>
+            
+            <p>#UCOSIII-v3.04.05 定时器Bug</p>
+<p>[TOC]</p>
+<h2 id="0-异常发生"><a href="#0-异常发生" class="headerlink" title="0. 异常发生"></a>0. 异常发生</h2><p>移植Dthing 到UCOSIII-v3.04.05, 使用UCOS定时器作为调度时标支持. 涉及到定时器接口:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"><span class="function"><span class="keyword">void</span>  <span class="title">OSTmrCreate</span> <span class="params">(OS_TMR               *p_tmr,</span></span></div><div class="line"><span class="function"><span class="params">                   CPU_CHAR             *p_name,</span></span></div><div class="line"><span class="function"><span class="params">                   OS_TICK               dly,</span></span></div><div class="line"><span class="function"><span class="params">                   OS_TICK               period,</span></span></div><div class="line"><span class="function"><span class="params">                   OS_OPT                opt,</span></span></div><div class="line"><span class="function"><span class="params">                   OS_TMR_CALLBACK_PTR   p_callback,</span></span></div><div class="line"><span class="function"><span class="params">                   <span class="keyword">void</span>                 *p_callback_arg,</span></span></div><div class="line"><span class="function"><span class="params">                   OS_ERR               *p_err)</span></span></div></pre></td></tr></table></figure>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="function">CPU_BOOLEAN  <span class="title">OSTmrStart</span> <span class="params">(OS_TMR  *p_tmr,</span></span></div><div class="line"><span class="function"><span class="params">                         OS_ERR  *p_err)</span></span></div></pre></td></tr></table></figure>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="function">CPU_BOOLEAN  <span class="title">OSTmrStop</span> <span class="params">(OS_TMR  *p_tmr,</span></span></div><div class="line"><span class="function"><span class="params">                        OS_OPT   opt,</span></span></div><div class="line"><span class="function"><span class="params">                        <span class="keyword">void</span>    *p_callback_arg,</span></span></div><div class="line"><span class="function"><span class="params">                        OS_ERR  *p_err)</span></span></div></pre></td></tr></table></figure>
+<p>创建定时器示意代码:</p>
+<ul>
+<li>周期性定时器</li>
+<li>无delay</li>
+<li>周期性时间为若干毫秒</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">        OS_TMR * tmr  = NULL;        </div><div class="line">        OS_OPT   opt  = OS_OPT_TMR_PERIODIC;        </div><div class="line">        OS_TICK  dly  = 0;</div><div class="line">        OS_ERR   err;</div><div class="line">        </div><div class="line">        tmr = malloc(sizeof(OS_TMR));</div><div class="line">        if(tmr == NULL)&#123;            </div><div class="line">            //handle exception</div><div class="line">            return;</div><div class="line">        &#125;</div><div class="line">        </div><div class="line">        OSTmrCreate(tmr, &quot;name&quot;, dly, period_ms, opt, callback, NULL, &amp;err);</div></pre></td></tr></table></figure>
+<p>然后启动定时器在各种状态下进行Debug Start/Stop, 然后奇怪的事情发生了:</p>
+<blockquote>
+<p>有时出现等待很久, 定时器都没有超时回调callback的情况</p>
+</blockquote>
+<a id="more"></a>
+<h2 id="1-原因在哪"><a href="#1-原因在哪" class="headerlink" title="1. 原因在哪?"></a>1. 原因在哪?</h2><p>反复检查参数设置, 阅读各API使用说明, 均未发现接口使用方面的异常, 相关Dthing定时器逻辑层代码在其他操作系统, 诸如win/threadx都能正常的超时响应. 是ucos-iii定时器存在BUG?</p>
+<p>顺着这个猜想开始阅读ucos-iii timer源码.</p>
+<p>###1.1 Timer的状态转换 </p>
+<ol>
+<li><p>create时, 状态设置为OS_TMR_STATE_STOPPED:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">p_tmr-&gt;State          = (OS_STATE           )OS_TMR_STATE_STOPPED;     <span class="comment">/* Initialize the timer fields             */</span></div></pre></td></tr></table></figure>
+<p>​</p>
+</li>
+<li><p>首次start成功后,状态切换到 OS_TMR_STATE_RUNNING:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line">    <span class="keyword">case</span> OS_TMR_STATE_STOPPED:                          <span class="comment">/* Start the timer                                        */</span></div><div class="line">    <span class="keyword">case</span> OS_TMR_STATE_COMPLETED:</div><div class="line">         p_tmr-&gt;State  = OS_TMR_STATE_RUNNING;</div><div class="line"><span class="keyword">if</span> (p_tmr-&gt;Dly == (OS_TICK)<span class="number">0</span>) &#123;</div><div class="line">             p_tmr-&gt;Remain = p_tmr-&gt;Period;</div><div class="line">&#125; <span class="keyword">else</span> &#123;</div><div class="line">             p_tmr-&gt;Remain = p_tmr-&gt;Dly;</div><div class="line">         &#125;</div><div class="line">         <span class="keyword">if</span> (OSTmrListPtr ==  (OS_TMR *)<span class="number">0</span>) &#123;            <span class="comment">/* Link into timer list                                   */</span></div><div class="line">             p_tmr-&gt;NextPtr   = (OS_TMR *)<span class="number">0</span>;            <span class="comment">/* This is the first timer in the list                    */</span></div><div class="line">             p_tmr-&gt;PrevPtr   = (OS_TMR *)<span class="number">0</span>;</div><div class="line">             OSTmrListPtr     = p_tmr;</div><div class="line">             OSTmrListEntries = <span class="number">1u</span>;</div><div class="line">         &#125; <span class="keyword">else</span> &#123;</div><div class="line">             p_next           = OSTmrListPtr;           <span class="comment">/* Insert at the beginning of the list                    */</span></div><div class="line">             p_tmr-&gt;NextPtr   = OSTmrListPtr;</div><div class="line">             p_tmr-&gt;PrevPtr   = (OS_TMR *)<span class="number">0</span>;</div><div class="line">             p_next-&gt;PrevPtr  = p_tmr;</div><div class="line">             OSTmrListPtr     = p_tmr;</div><div class="line">             OSTmrListEntries++;</div><div class="line">         &#125;</div><div class="line">        *p_err   = OS_ERR_NONE;</div><div class="line">         success = DEF_TRUE;</div><div class="line">         <span class="keyword">break</span>;</div></pre></td></tr></table></figure>
+</li>
+<li><p>再看timer的任务核心逻辑部分:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">p_tmr-&gt;Remain--;</div><div class="line">            <span class="keyword">if</span> (p_tmr-&gt;Remain == <span class="number">0</span>) &#123;</div><div class="line">                <span class="keyword">if</span> (p_tmr-&gt;Opt == OS_OPT_TMR_PERIODIC) &#123;</div><div class="line">                    p_tmr-&gt;Remain = p_tmr-&gt;Period;               <span class="comment">/* Reload the time remaining                         */</span></div><div class="line">                &#125; <span class="keyword">else</span> &#123;</div><div class="line">                    OS_TmrUnlink(p_tmr);                         <span class="comment">/* Remove from list                                  */</span></div><div class="line">                    p_tmr-&gt;State = OS_TMR_STATE_COMPLETED;       <span class="comment">/* Indicate that the timer has completed             */</span></div><div class="line">                &#125;</div><div class="line">                p_fnct = p_tmr-&gt;CallbackPtr;                     <span class="comment">/* Execute callback function if available            */</span></div><div class="line">                <span class="keyword">if</span> (p_fnct != (OS_TMR_CALLBACK_PTR)<span class="number">0</span>) &#123;</div><div class="line">                    (*p_fnct)((<span class="keyword">void</span> *)p_tmr,</div><div class="line">                              p_tmr-&gt;CallbackPtrArg);</div><div class="line">                &#125;</div><div class="line">            &#125;</div></pre></td></tr></table></figure>
+<p>p_tmr-&gt;Remain先–, 再判断如果到0且为周期性定时器, 再次装载计时时间间隔,然后调用回调; 如果到0且是一次性定时器, 就切换到OS_TMR_STATE_COMPLETED状态.</p>
+<p>看到这里知道, 定时器超时是通过p_tmr-&gt;Remain变量判断的, 再查p_tmr-&gt;Remain的赋值地方</p>
+</li>
+<li><p>关注点回到OSTmrStart:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line">...</div><div class="line">    <span class="keyword">switch</span> (p_tmr-&gt;State) &#123;</div><div class="line">        <span class="keyword">case</span> OS_TMR_STATE_RUNNING:                          <span class="comment">/* Restart the timer                                      */</span></div><div class="line">             p_tmr-&gt;Remain = p_tmr-&gt;Dly;</div><div class="line">            *p_err         = OS_ERR_NONE;</div><div class="line">             success       = DEF_TRUE;</div><div class="line">             <span class="keyword">break</span>;</div><div class="line"></div><div class="line">        <span class="keyword">case</span> OS_TMR_STATE_STOPPED:                          <span class="comment">/* Start the timer                                        */</span></div><div class="line">        <span class="keyword">case</span> OS_TMR_STATE_COMPLETED:</div><div class="line">             p_tmr-&gt;State  = OS_TMR_STATE_RUNNING;</div><div class="line">			 <span class="keyword">if</span> (p_tmr-&gt;Dly == (OS_TICK)<span class="number">0</span>) &#123;</div><div class="line">                 p_tmr-&gt;Remain = p_tmr-&gt;Period;</div><div class="line">			 &#125; <span class="keyword">else</span> &#123;</div><div class="line">                 p_tmr-&gt;Remain = p_tmr-&gt;Dly;</div><div class="line">             &#125;</div><div class="line">...</div></pre></td></tr></table></figure>
+<p>​    终于柳暗花明, p_tmr-&gt;Remain在不同的定时策略下，初值来自p_tmr-&gt;Period或者p_tmr-&gt;Dly.</p>
+<p>​    注意 <code>case OS_TMR_STATE_RUNNING:</code> 条件和’case OS_TMR_STATE_STOPPED’ 不一致的地方, 再快速联想到:</p>
+<p>​    1)  使用时dly初值为0</p>
+<p>​    2) typedef   CPU_INT32U      OS_TICK;</p>
+<p>​    3) 定时器任务是Remain先– 再与0判断</p>
+</li>
+</ol>
+<h3 id="1-2-真相终于浮出水面"><a href="#1-2-真相终于浮出水面" class="headerlink" title="1.2 真相终于浮出水面"></a>1.2 真相终于浮出水面</h3><p>​    如果定时器还在运行状态,再次Start了定时器, Remain的初值是直接装载的delay值,而我们设置的delay值为0,这种条件下Remain的值就变为0. 定时器任务又是先对Remian做的自减后再与0对比，实际这时类型为u32的Remain–已经后已经溢出为0xFFFFFFFF.</p>
+<p>​    等待这么大的TICK超时, 太久了….</p>
+<p>​    至此,确认这个BUG源自UCOS 3.04.05的Timer本身</p>
+<h2 id="2-解决方案"><a href="#2-解决方案" class="headerlink" title="2.解决方案"></a>2.解决方案</h2><p>找到原因后的解决方案是极为容易的, 在 <code>OS_TMR_STATE_RUNNING</code> 状态下采用和 ‘OS_TMR_STATE_STOPPED’ 状态相同的Remain赋值逻辑即可:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div></pre></td><td class="code"><pre><div class="line">...</div><div class="line">    <span class="keyword">switch</span> (p_tmr-&gt;State) &#123;</div><div class="line">        <span class="keyword">case</span> OS_TMR_STATE_RUNNING:                          <span class="comment">/* Restart the timer                                      */</span></div><div class="line">             <span class="keyword">if</span> (p_tmr-&gt;Dly == (OS_TICK)<span class="number">0</span>) &#123;</div><div class="line">                 p_tmr-&gt;Remain = p_tmr-&gt;Period;</div><div class="line">			 &#125; <span class="keyword">else</span> &#123;</div><div class="line">                 p_tmr-&gt;Remain = p_tmr-&gt;Dly;</div><div class="line">             &#125;</div><div class="line">            *p_err         = OS_ERR_NONE;</div><div class="line">             success       = DEF_TRUE;</div><div class="line">             <span class="keyword">break</span>;</div><div class="line"></div><div class="line">        <span class="keyword">case</span> OS_TMR_STATE_STOPPED:                          <span class="comment">/* Start the timer                                        */</span></div><div class="line">        <span class="keyword">case</span> OS_TMR_STATE_COMPLETED:</div><div class="line">             p_tmr-&gt;State  = OS_TMR_STATE_RUNNING;</div><div class="line">			 <span class="keyword">if</span> (p_tmr-&gt;Dly == (OS_TICK)<span class="number">0</span>) &#123;</div><div class="line">                 p_tmr-&gt;Remain = p_tmr-&gt;Period;</div><div class="line">			 &#125; <span class="keyword">else</span> &#123;</div><div class="line">                 p_tmr-&gt;Remain = p_tmr-&gt;Dly;</div><div class="line">             &#125;</div><div class="line">...</div></pre></td></tr></table></figure>
+<p>​    不用担心Period和Delay都会为0再次造成Remain–溢出, 因为都为0在创建定时器的时候已经返回错误了</p>
+<h2 id="3-新版本还有bug吗"><a href="#3-新版本还有bug吗" class="headerlink" title="3.新版本还有bug吗"></a>3.新版本还有bug吗</h2><p>​    通过Review UCOS-III 3.04.05定时器源码找到了这个定时器bug并解决, 那最新版本的ucos-iii还存在这个bug吗? 于是翻阅了v3.06.x的定时器源码:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line">...</div><div class="line"><span class="keyword">case</span> OS_TMR_STATE_RUNNING:                              <span class="comment">/* Restart the timer                                    */</span></div><div class="line">             <span class="keyword">if</span> (p_tmr-&gt;Dly == <span class="number">0u</span>) &#123;</div><div class="line">                 p_tmr-&gt;Remain = p_tmr-&gt;Period;</div><div class="line">             &#125; <span class="keyword">else</span> &#123;</div><div class="line">                 p_tmr-&gt;Remain = p_tmr-&gt;Dly;</div><div class="line">             &#125;</div><div class="line">            *p_err         = OS_ERR_NONE;</div><div class="line">             success       = DEF_TRUE;</div><div class="line">             <span class="keyword">break</span>;</div><div class="line"></div><div class="line">        <span class="keyword">case</span> OS_TMR_STATE_STOPPED:                              <span class="comment">/* Start the timer                                      */</span></div><div class="line">        <span class="keyword">case</span> OS_TMR_STATE_COMPLETED:</div><div class="line">             p_tmr-&gt;State  = OS_TMR_STATE_RUNNING;</div><div class="line">             <span class="keyword">if</span> (p_tmr-&gt;Dly == <span class="number">0u</span>) &#123;</div><div class="line">                 p_tmr-&gt;Remain = p_tmr-&gt;Period;</div><div class="line">             &#125; <span class="keyword">else</span> &#123;</div><div class="line">                 p_tmr-&gt;Remain = p_tmr-&gt;Dly;</div><div class="line">             &#125;</div><div class="line">...</div></pre></td></tr></table></figure>
+<p>​    很显然的, ucos-iii官方已经测试到并使用相同的方法解决掉这个bug了.任然不死心, 去官方网站寻找这个bug从哪个版本解决的, 在 <a href="https://doc.micrium.com/pages/viewpage.action?pageId=12851580" target="_blank" rel="external">UCOS-III Release note</a> 找到:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">Version 3.06.00</div><div class="line">Releasedate :2016-06-30</div><div class="line">...</div><div class="line">Bug fixes</div><div class="line"></div><div class="line">...</div><div class="line">When resetting a periodic timer with 0 initialdelay, the timer is now reset to the period value rather than the initial delay.</div><div class="line">...</div></pre></td></tr></table></figure>
+<p>​    于2016.06.30 在3.06.00版本fix. 另外还看到其他特性/bug的修改,看来需要升级UCOS-III的版本了…</p>
+
+        
+        </div>
+        <footer class="article-footer">
+            <div class="share-container">
+
+
+
+</div>
+
+    <a data-url="http://yoursite.com/2017/10/26/04-Mcu/[mcu] - UCOSIII-3.04.05定时器Bug/" data-id="cj9f7nm9h000k8soad8417pm8" class="article-share-link"><i class="fa fa-share"></i>Share</a>
+<script>
+    (function ($) {
+        // Prevent duplicate binding
+        if (typeof(__SHARE_BUTTON_BINDED__) === 'undefined' || !__SHARE_BUTTON_BINDED__) {
+            __SHARE_BUTTON_BINDED__ = true;
+        } else {
+            return;
+        }
+        $('body').on('click', function() {
+            $('.article-share-box.on').removeClass('on');
+        }).on('click', '.article-share-link', function(e) {
+            e.stopPropagation();
+
+            var $this = $(this),
+                url = $this.attr('data-url'),
+                encodedUrl = encodeURIComponent(url),
+                id = 'article-share-box-' + $this.attr('data-id'),
+                offset = $this.offset(),
+                box;
+
+            if ($('#' + id).length) {
+                box = $('#' + id);
+
+                if (box.hasClass('on')){
+                    box.removeClass('on');
+                    return;
+                }
+            } else {
+                var html = [
+                    '<div id="' + id + '" class="article-share-box">',
+                        '<input class="article-share-input" value="' + url + '">',
+                        '<div class="article-share-links">',
+                            '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="fa fa-twitter article-share-twitter" target="_blank" title="Twitter"></a>',
+                            '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="fa fa-facebook article-share-facebook" target="_blank" title="Facebook"></a>',
+                            '<a href="http://pinterest.com/pin/create/button/?url=' + encodedUrl + '" class="fa fa-pinterest article-share-pinterest" target="_blank" title="Pinterest"></a>',
+                            '<a href="https://plus.google.com/share?url=' + encodedUrl + '" class="fa fa-google article-share-google" target="_blank" title="Google+"></a>',
+                        '</div>',
+                    '</div>'
+                ].join('');
+
+              box = $(html);
+
+              $('body').append(box);
+            }
+
+            $('.article-share-box.on').hide();
+
+            box.css({
+                top: offset.top + 25,
+                left: offset.left
+            }).addClass('on');
+
+        }).on('click', '.article-share-box', function (e) {
+            e.stopPropagation();
+        }).on('click', '.article-share-box-input', function () {
+            $(this).select();
+        }).on('click', '.article-share-box-link', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            window.open(this.href, 'article-share-box-window-' + Date.now(), 'width=500,height=450');
+        });
+    })(jQuery);
+</script>
+
+            
+    
+
+        </footer>
+    </div>
+    
+        
+<nav id="article-nav">
+    
+    
+        <a href="/2017/10/25/02-Vm/[vm] - VM学习工具和资料整理/" id="article-nav-older" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">Older</strong>
+            <div class="article-nav-title">VM学习资料整理</div>
+        </a>
+    
+</nav>
+
+
+    
+</article>
+
+
+    
+    
+
+</section>
+            
+                
+<aside id="sidebar">
+   
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">tag cloud</h3>
+        <div class="widget tagcloud">
+            <a href="/tags/Heap/" style="font-size: 10px;">Heap</a> <a href="/tags/Iot/" style="font-size: 10px;">Iot</a> <a href="/tags/Lora/" style="font-size: 10px;">Lora</a> <a href="/tags/NB-IOT/" style="font-size: 10px;">NB-IOT</a> <a href="/tags/STACK/" style="font-size: 10px;">STACK</a> <a href="/tags/STM32/" style="font-size: 15px;">STM32</a> <a href="/tags/Ymodem/" style="font-size: 10px;">Ymodem</a> <a href="/tags/dalvik/" style="font-size: 15px;">dalvik</a> <a href="/tags/github/" style="font-size: 10px;">github</a> <a href="/tags/hexo/" style="font-size: 10px;">hexo</a> <a href="/tags/iot/" style="font-size: 15px;">iot</a> <a href="/tags/jvm/" style="font-size: 15px;">jvm</a> <a href="/tags/lora/" style="font-size: 10px;">lora</a> <a href="/tags/nb-iot/" style="font-size: 10px;">nb-iot</a> <a href="/tags/smali/" style="font-size: 10px;">smali</a> <a href="/tags/timer/" style="font-size: 10px;">timer</a> <a href="/tags/ucosiii/" style="font-size: 10px;">ucosiii</a> <a href="/tags/vm/" style="font-size: 20px;">vm</a> <a href="/tags/wifi/" style="font-size: 10px;">wifi</a> <a href="/tags/zigbee/" style="font-size: 10px;">zigbee</a>
+        </div>
+    </div>
+
+    
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">categories</h3>
+        <div class="widget">
+            <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/IOT/">IOT</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/MCU/">MCU</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/TOOL/">TOOL</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/VM/">VM</a><span class="category-list-count">4</span></li></ul>
+        </div>
+    </div>
+
+    
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">archives</h3>
+        <div class="widget">
+            <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/10/">October 2017</a><span class="archive-list-count">5</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/09/">September 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/08/">August 2017</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/07/">July 2017</a><span class="archive-list-count">3</span></li></ul>
+        </div>
+    </div>
+
+    
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">recent</h3>
+        <div class="widget">
+            <ul id="recent-post" class="">
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/10/26/04-Mcu/[mcu] - UCOSIII-3.04.05定时器Bug/" class="thumbnail">
+    
+    
+        <span style="background-image:url(http://otfz8unl1.bkt.clouddn.com/markdown/171031/43LFEFGHeL.png)" alt="UCOSIII-v3.04.05 定时器Bug" class="thumbnail-image"></span>
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/MCU/">MCU</a></p>
+                            <p class="item-title"><a href="/2017/10/26/04-Mcu/[mcu] - UCOSIII-3.04.05定时器Bug/" class="title">UCOSIII-v3.04.05 定时器Bug</a></p>
+                            <p class="item-date"><time datetime="2017-10-26T10:00:00.000Z" itemprop="datePublished">2017-10-26</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/10/25/02-Vm/[vm] - VM学习工具和资料整理/" class="thumbnail">
+    
+    
+        <span style="background-image:url(http://otfz8unl1.bkt.clouddn.com/markdown/171031/DjHBD0j695.png)" alt="VM学习资料整理" class="thumbnail-image"></span>
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/VM/">VM</a></p>
+                            <p class="item-title"><a href="/2017/10/25/02-Vm/[vm] - VM学习工具和资料整理/" class="title">VM学习资料整理</a></p>
+                            <p class="item-date"><time datetime="2017-10-25T04:00:00.000Z" itemprop="datePublished">2017-10-25</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/10/20/02-Vm/[vm] - Dalvik反编译/" class="thumbnail">
+    
+    
+        <span style="background-image:url(http://otfz8unl1.bkt.clouddn.com/markdown/171031/CK92afFfl2.png)" alt="Dalvik反编译" class="thumbnail-image"></span>
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/VM/">VM</a></p>
+                            <p class="item-title"><a href="/2017/10/20/02-Vm/[vm] - Dalvik反编译/" class="title">Dalvik反编译</a></p>
+                            <p class="item-date"><time datetime="2017-10-20T04:02:00.000Z" itemprop="datePublished">2017-10-20</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/10/20/02-Vm/[vm] - JVM反编译/" class="thumbnail">
+    
+    
+        <span style="background-image:url(http://otfz8unl1.bkt.clouddn.com/markdown/171031/DjHBD0j695.png)" alt="JVM反编译" class="thumbnail-image"></span>
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/VM/">VM</a></p>
+                            <p class="item-title"><a href="/2017/10/20/02-Vm/[vm] - JVM反编译/" class="title">JVM反编译</a></p>
+                            <p class="item-date"><time datetime="2017-10-20T04:00:00.000Z" itemprop="datePublished">2017-10-20</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/10/19/02-Vm/[vm] - 理解Dalvik指令码执行原理/" class="thumbnail">
+    
+    
+        <span style="background-image:url(http://otfz8unl1.bkt.clouddn.com/markdown/171031/BmAKL24Fj9.png)" alt="理解Dalvik指令码执行原理" class="thumbnail-image"></span>
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/VM/">VM</a></p>
+                            <p class="item-title"><a href="/2017/10/19/02-Vm/[vm] - 理解Dalvik指令码执行原理/" class="title">理解Dalvik指令码执行原理</a></p>
+                            <p class="item-date"><time datetime="2017-10-19T04:00:00.000Z" itemprop="datePublished">2017-10-19</time></p>
+                        </div>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+
+    
+    <div id="toTop" class="fa fa-angle-up"></div>
+</aside>
+
+            
+        </div>
+        <footer id="footer">
+    <div class="outer">
+        <div id="footer-info" class="inner">
+            &copy; 2017 nix.long<br>
+            Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>. Theme by <a href="http://github.com/ppoffice">PPOffice</a>
+        </div>
+    </div>
+</footer>
+        
+
+
+    
+        <script src="/libs/lightgallery/js/lightgallery.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-thumbnail.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-pager.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-autoplay.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-fullscreen.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-zoom.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-hash.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-share.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-video.min.js"></script>
+    
+    
+        <script src="/libs/justified-gallery/jquery.justifiedGallery.min.js"></script>
+    
+    
+        <script type="text/x-mathjax-config">
+            MathJax.Hub.Config({ tex2jax: { inlineMath: [['$','$'], ['\\(','\\)']] } });
+        </script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+    
+
+
+
+<!-- Custom Scripts -->
+<script src="/js/main.js"></script>
+
+    </div>
+</body>
+</html>

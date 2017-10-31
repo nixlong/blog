@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+    <meta charset="utf-8">
+    
+    <title>理解Dalvik指令码执行原理 | I&#39;m Long</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="[VM]理解Dalvik指令码执行原理[TOC] 0. Android 源文档Android 在源码4.0的docs目录下，提供了3篇文档: 1) .dex — Dalvik Executable Format - 描述了Dex文件格式2) Bytecode for the Dalvik VM - 描述了Dalvik的字节码指令集3) Dalvik VM Instruction Formats -">
+<meta name="keywords" content="vm,dalvik,smali">
+<meta property="og:type" content="article">
+<meta property="og:title" content="理解Dalvik指令码执行原理">
+<meta property="og:url" content="http://yoursite.com/2017/10/19/02-Vm/[vm] - 理解Dalvik指令码执行原理/index.html">
+<meta property="og:site_name" content="I&#39;m Long">
+<meta property="og:description" content="[VM]理解Dalvik指令码执行原理[TOC] 0. Android 源文档Android 在源码4.0的docs目录下，提供了3篇文档: 1) .dex — Dalvik Executable Format - 描述了Dex文件格式2) Bytecode for the Dalvik VM - 描述了Dalvik的字节码指令集3) Dalvik VM Instruction Formats -">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="http://otfz8unl1.bkt.clouddn.com/markdown/171031/BmAKL24Fj9.png">
+<meta property="og:updated_time" content="2017-10-31T06:04:37.932Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="理解Dalvik指令码执行原理">
+<meta name="twitter:description" content="[VM]理解Dalvik指令码执行原理[TOC] 0. Android 源文档Android 在源码4.0的docs目录下，提供了3篇文档: 1) .dex — Dalvik Executable Format - 描述了Dex文件格式2) Bytecode for the Dalvik VM - 描述了Dalvik的字节码指令集3) Dalvik VM Instruction Formats -">
+<meta name="twitter:image" content="http://otfz8unl1.bkt.clouddn.com/markdown/171031/BmAKL24Fj9.png">
+    
+
+    
+
+    
+
+    <link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/libs/open-sans/styles.css">
+    <link rel="stylesheet" href="/libs/source-code-pro/styles.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+
+    <script src="/libs/jquery/2.1.3/jquery.min.js"></script>
+    
+    
+        <link rel="stylesheet" href="/libs/lightgallery/css/lightgallery.min.css">
+    
+    
+        <link rel="stylesheet" href="/libs/justified-gallery/justifiedGallery.min.css">
+    
+    
+    
+    
+
+
+</head>
+
+<body>
+    <div id="container">
+        <header id="header">
+    <div id="header-main" class="header-inner">
+        <div class="outer">
+            <a href="/" id="logo">
+                
+                <span class="site-title">I&#39;m Long</span>
+            </a>
+            <nav id="main-nav">
+                
+                    <a class="main-nav-link" href="/">Home</a>
+                
+                    <a class="main-nav-link" href="/archives/">Archives</a>
+                
+                    <a class="main-nav-link" href="/categories/">Categories</a>
+                
+                    <a class="main-nav-link" href="/about">About</a>
+                
+            </nav>
+            
+                
+                <nav id="sub-nav">
+                    <div class="profile" id="profile-nav">
+                        <a id="profile-anchor" href="javascript:;">
+                            <img class="avatar" src="http://otfz8unl1.bkt.clouddn.com/markdown/170815/2LlFGLFh3C.png" />
+                            <i class="fa fa-caret-down"></i>
+                        </a>
+                    </div>
+                </nav>
+            
+            <div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="Search" />
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="Type something..." />
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: 'Posts',
+            PAGES: 'Pages',
+            CATEGORIES: 'Categories',
+            TAGS: 'Tags',
+            UNTITLED: '(Untitled)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+</div>
+        </div>
+    </div>
+    <div id="main-nav-mobile" class="header-sub header-inner">
+        <table class="menu outer">
+            <tr>
+                
+                    <td><a class="main-nav-link" href="/">Home</a></td>
+                
+                    <td><a class="main-nav-link" href="/archives/">Archives</a></td>
+                
+                    <td><a class="main-nav-link" href="/categories/">Categories</a></td>
+                
+                    <td><a class="main-nav-link" href="/about">About</a></td>
+                
+                <td>
+                    
+    <div class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="Search" />
+    </div>
+
+                </td>
+            </tr>
+        </table>
+    </div>
+</header>
+
+        <div class="outer">
+            
+                
+
+<aside id="profile">
+    <div class="inner profile-inner">
+        <div class="base-info profile-block">
+            <img id="avatar" src="http://otfz8unl1.bkt.clouddn.com/markdown/170815/2LlFGLFh3C.png" />
+            <h2 id="name">nix.long</h2>
+            <h3 id="title">The Coder</h3>
+            <span id="location"><i class="fa fa-map-marker"></i>ChengDu, China</span>
+            <a id="follow" target="_blank" href="https://github.com/nixlong/">FOLLOW</a>
+        </div>
+        <div class="article-info profile-block">
+            <div class="article-info-block">
+                11
+                <span>posts</span>
+            </div>
+            <div class="article-info-block">
+                20
+                <span>tags</span>
+            </div>
+        </div>
+        
+    </div>
+</aside>
+
+            
+            <section id="main"><article id="post-02-Vm/[vm] - 理解Dalvik指令码执行原理" class="article article-type-post" itemscope itemprop="blogPost">
+    <div class="article-inner">
+        
+            
+	
+		<img src="http://otfz8unl1.bkt.clouddn.com/markdown/171031/BmAKL24Fj9.png" class="article-banner" />
+	
+
+
+
+        
+        
+            <header class="article-header">
+                
+    
+        <h1 class="article-title" itemprop="name">
+            理解Dalvik指令码执行原理
+        </h1>
+    
+
+                
+                    <div class="article-meta">
+                        
+    <div class="article-date">
+        <i class="fa fa-calendar"></i>
+        <a href="/2017/10/19/02-Vm/[vm] - 理解Dalvik指令码执行原理/">
+            <time datetime="2017-10-19T04:00:00.000Z" itemprop="datePublished">2017-10-19</time>
+        </a>
+    </div>
+
+
+                        
+    <div class="article-category">
+    	<i class="fa fa-folder"></i>
+        <a class="article-category-link" href="/categories/VM/">VM</a>
+    </div>
+
+                        
+    <div class="article-tag">
+        <i class="fa fa-tag"></i>
+        <a class="tag-link" href="/tags/dalvik/">dalvik</a>, <a class="tag-link" href="/tags/smali/">smali</a>, <a class="tag-link" href="/tags/vm/">vm</a>
+    </div>
+
+                    </div>
+                
+            </header>
+        
+        
+        <div class="article-entry" itemprop="articleBody">
+        
+            
+                <div id="toc" class="toc-article">
+                <strong class="toc-title">Catalogue</strong>
+                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#VM-理解Dalvik指令码执行原理"><span class="toc-number">1.</span> <span class="toc-text">[VM]理解Dalvik指令码执行原理</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#0-Android-源文档"><span class="toc-number">1.1.</span> <span class="toc-text">0. Android 源文档</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-弄懂Dex文件格式"><span class="toc-number">1.2.</span> <span class="toc-text">1. 弄懂Dex文件格式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-弄懂Dalvik指令格式"><span class="toc-number">1.3.</span> <span class="toc-text">2.弄懂Dalvik指令格式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-读懂指令码"><span class="toc-number">1.4.</span> <span class="toc-text">3.读懂指令码</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-指令操作码"><span class="toc-number">1.4.1.</span> <span class="toc-text">3.1 指令操作码</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-指令格式标识"><span class="toc-number">1.4.2.</span> <span class="toc-text">3.2 指令格式标识</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-3-使用以上表进行指令阅读"><span class="toc-number">1.4.3.</span> <span class="toc-text">3.3 使用以上表进行指令阅读</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-4-小结"><span class="toc-number">1.4.4.</span> <span class="toc-text">3.4 小结</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-尾巴"><span class="toc-number">1.5.</span> <span class="toc-text">4. 尾巴</span></a></li></ol></li></ol>
+                </div>
+            
+            <h1 id="VM-理解Dalvik指令码执行原理"><a href="#VM-理解Dalvik指令码执行原理" class="headerlink" title="[VM]理解Dalvik指令码执行原理"></a>[VM]理解Dalvik指令码执行原理</h1><p>[TOC]</p>
+<h2 id="0-Android-源文档"><a href="#0-Android-源文档" class="headerlink" title="0. Android 源文档"></a>0. Android 源文档</h2><p>Android 在源码4.0的docs目录下，提供了3篇文档:</p>
+<p>1) <code>.dex — Dalvik Executable Format</code> - 描述了Dex文件格式<br>2) <code>Bytecode for the Dalvik VM</code> - 描述了Dalvik的字节码指令集<br>3) <code>Dalvik VM Instruction Formats</code> - 描述了Dalvik的指令格式</p>
+<h2 id="1-弄懂Dex文件格式"><a href="#1-弄懂Dex文件格式" class="headerlink" title="1. 弄懂Dex文件格式"></a>1. 弄懂Dex文件格式</h2><p>这块网上有较好的介绍, 比如:</p>
+<p><a href="http://www.jianshu.com/p/02250d7f9ff4" target="_blank" rel="external">彻底弄懂dalvik字节码【一】</a><br><a href="http://www.jianshu.com/p/90cef9026c9e" target="_blank" rel="external">彻底弄懂dalvik字节码【二】</a><br><a href="http://www.jianshu.com/p/aba1f966d7f2" target="_blank" rel="external">彻底弄懂dalvik字节码【三】</a><br><a href="http://www.blogfshare.com/dex-format.html" target="_blank" rel="external">Android安全–Dex文件格式详解</a><br><a href="http://blog.csdn.net/sinat_18268881/article/details/55832757" target="_blank" rel="external">一篇文章带你搞懂DEX文件的结构</a></p>
+<h2 id="2-弄懂Dalvik指令格式"><a href="#2-弄懂Dalvik指令格式" class="headerlink" title="2.弄懂Dalvik指令格式"></a>2.弄懂Dalvik指令格式</h2><p>参考:</p>
+<p><a href="http://blog.csdn.net/c147258hong/article/details/51612076" target="_blank" rel="external">Dalvik指令格式</a></p>
+<h2 id="3-读懂指令码"><a href="#3-读懂指令码" class="headerlink" title="3.读懂指令码"></a>3.读懂指令码</h2><blockquote>
+<p>一条完整的Dalvik指令是变长的。Dalvik的指令语义需要由[指令操作码]和[指令格式]共同才能确定，而沟通[指令操作码]和[指令格式]的纽带, 叫做[指令格式标识].</p>
+</blockquote>
+<h3 id="3-1-指令操作码"><a href="#3-1-指令操作码" class="headerlink" title="3.1 指令操作码"></a>3.1 指令操作码</h3><p>在Android 4.0 的Dalvik中，定义了如下指令操作码:</p>
+<a id="more"></a>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div><div class="line">112</div><div class="line">113</div><div class="line">114</div><div class="line">115</div><div class="line">116</div><div class="line">117</div><div class="line">118</div><div class="line">119</div><div class="line">120</div><div class="line">121</div><div class="line">122</div><div class="line">123</div><div class="line">124</div><div class="line">125</div><div class="line">126</div><div class="line">127</div><div class="line">128</div><div class="line">129</div><div class="line">130</div><div class="line">131</div><div class="line">132</div><div class="line">133</div><div class="line">134</div><div class="line">135</div><div class="line">136</div><div class="line">137</div><div class="line">138</div><div class="line">139</div><div class="line">140</div><div class="line">141</div><div class="line">142</div><div class="line">143</div><div class="line">144</div><div class="line">145</div><div class="line">146</div><div class="line">147</div><div class="line">148</div><div class="line">149</div><div class="line">150</div><div class="line">151</div><div class="line">152</div><div class="line">153</div><div class="line">154</div><div class="line">155</div><div class="line">156</div><div class="line">157</div><div class="line">158</div><div class="line">159</div><div class="line">160</div><div class="line">161</div><div class="line">162</div><div class="line">163</div><div class="line">164</div><div class="line">165</div><div class="line">166</div><div class="line">167</div><div class="line">168</div><div class="line">169</div><div class="line">170</div><div class="line">171</div><div class="line">172</div><div class="line">173</div><div class="line">174</div><div class="line">175</div><div class="line">176</div><div class="line">177</div><div class="line">178</div><div class="line">179</div><div class="line">180</div><div class="line">181</div><div class="line">182</div><div class="line">183</div><div class="line">184</div><div class="line">185</div><div class="line">186</div><div class="line">187</div><div class="line">188</div><div class="line">189</div><div class="line">190</div><div class="line">191</div><div class="line">192</div><div class="line">193</div><div class="line">194</div><div class="line">195</div><div class="line">196</div><div class="line">197</div><div class="line">198</div><div class="line">199</div><div class="line">200</div><div class="line">201</div><div class="line">202</div><div class="line">203</div><div class="line">204</div><div class="line">205</div><div class="line">206</div><div class="line">207</div><div class="line">208</div><div class="line">209</div><div class="line">210</div><div class="line">211</div><div class="line">212</div><div class="line">213</div><div class="line">214</div><div class="line">215</div><div class="line">216</div><div class="line">217</div><div class="line">218</div><div class="line">219</div><div class="line">220</div><div class="line">221</div><div class="line">222</div><div class="line">223</div><div class="line">224</div><div class="line">225</div><div class="line">226</div><div class="line">227</div><div class="line">228</div><div class="line">229</div><div class="line">230</div><div class="line">231</div><div class="line">232</div><div class="line">233</div><div class="line">234</div><div class="line">235</div><div class="line">236</div><div class="line">237</div><div class="line">238</div><div class="line">239</div><div class="line">240</div><div class="line">241</div><div class="line">242</div><div class="line">243</div><div class="line">244</div><div class="line">245</div><div class="line">246</div><div class="line">247</div><div class="line">248</div><div class="line">249</div><div class="line">250</div><div class="line">251</div><div class="line">252</div><div class="line">253</div><div class="line">254</div><div class="line">255</div><div class="line">256</div><div class="line">257</div><div class="line">258</div><div class="line">259</div><div class="line">260</div><div class="line">261</div><div class="line">262</div><div class="line">263</div><div class="line">264</div><div class="line">265</div><div class="line">266</div><div class="line">267</div><div class="line">268</div><div class="line">269</div><div class="line">270</div><div class="line">271</div><div class="line">272</div><div class="line">273</div><div class="line">274</div><div class="line">275</div><div class="line">276</div><div class="line">277</div><div class="line">278</div><div class="line">279</div><div class="line">280</div><div class="line">281</div><div class="line">282</div><div class="line">283</div><div class="line">284</div><div class="line">285</div><div class="line">286</div><div class="line">287</div><div class="line">288</div><div class="line">289</div><div class="line">290</div><div class="line">291</div><div class="line">292</div><div class="line">293</div><div class="line">294</div><div class="line">295</div><div class="line">296</div><div class="line">297</div><div class="line">298</div><div class="line">299</div><div class="line">300</div><div class="line">301</div><div class="line">302</div><div class="line">303</div><div class="line">304</div><div class="line">305</div><div class="line">306</div><div class="line">307</div><div class="line">308</div><div class="line">309</div><div class="line">310</div><div class="line">311</div><div class="line">312</div><div class="line">313</div><div class="line">314</div><div class="line">315</div><div class="line">316</div><div class="line">317</div><div class="line">318</div><div class="line">319</div><div class="line">320</div><div class="line">321</div><div class="line">322</div><div class="line">323</div><div class="line">324</div><div class="line">325</div><div class="line">326</div><div class="line">327</div><div class="line">328</div><div class="line">329</div><div class="line">330</div><div class="line">331</div><div class="line">332</div><div class="line">333</div><div class="line">334</div><div class="line">335</div><div class="line">336</div><div class="line">337</div><div class="line">338</div><div class="line">339</div><div class="line">340</div><div class="line">341</div><div class="line">342</div><div class="line">343</div><div class="line">344</div><div class="line">345</div><div class="line">346</div><div class="line">347</div><div class="line">348</div><div class="line">349</div><div class="line">350</div><div class="line">351</div><div class="line">352</div><div class="line">353</div><div class="line">354</div><div class="line">355</div><div class="line">356</div><div class="line">357</div><div class="line">358</div><div class="line">359</div><div class="line">360</div><div class="line">361</div><div class="line">362</div><div class="line">363</div><div class="line">364</div><div class="line">365</div><div class="line">366</div><div class="line">367</div><div class="line">368</div><div class="line">369</div><div class="line">370</div><div class="line">371</div><div class="line">372</div><div class="line">373</div><div class="line">374</div><div class="line">375</div><div class="line">376</div><div class="line">377</div><div class="line">378</div><div class="line">379</div><div class="line">380</div><div class="line">381</div><div class="line">382</div><div class="line">383</div><div class="line">384</div><div class="line">385</div><div class="line">386</div><div class="line">387</div><div class="line">388</div><div class="line">389</div><div class="line">390</div><div class="line">391</div><div class="line">392</div><div class="line">393</div><div class="line">394</div><div class="line">395</div><div class="line">396</div><div class="line">397</div><div class="line">398</div><div class="line">399</div><div class="line">400</div><div class="line">401</div><div class="line">402</div><div class="line">403</div><div class="line">404</div><div class="line">405</div><div class="line">406</div><div class="line">407</div><div class="line">408</div><div class="line">409</div><div class="line">410</div><div class="line">411</div><div class="line">412</div><div class="line">413</div><div class="line">414</div><div class="line">415</div><div class="line">416</div><div class="line">417</div><div class="line">418</div><div class="line">419</div><div class="line">420</div><div class="line">421</div><div class="line">422</div><div class="line">423</div><div class="line">424</div><div class="line">425</div><div class="line">426</div><div class="line">427</div><div class="line">428</div><div class="line">429</div><div class="line">430</div><div class="line">431</div><div class="line">432</div><div class="line">433</div><div class="line">434</div><div class="line">435</div><div class="line">436</div><div class="line">437</div><div class="line">438</div><div class="line">439</div><div class="line">440</div><div class="line">441</div><div class="line">442</div><div class="line">443</div><div class="line">444</div><div class="line">445</div><div class="line">446</div><div class="line">447</div><div class="line">448</div><div class="line">449</div><div class="line">450</div><div class="line">451</div><div class="line">452</div><div class="line">453</div><div class="line">454</div><div class="line">455</div><div class="line">456</div><div class="line">457</div><div class="line">458</div><div class="line">459</div><div class="line">460</div><div class="line">461</div><div class="line">462</div><div class="line">463</div><div class="line">464</div><div class="line">465</div><div class="line">466</div><div class="line">467</div><div class="line">468</div><div class="line">469</div><div class="line">470</div><div class="line">471</div><div class="line">472</div><div class="line">473</div><div class="line">474</div><div class="line">475</div><div class="line">476</div><div class="line">477</div><div class="line">478</div><div class="line">479</div><div class="line">480</div><div class="line">481</div><div class="line">482</div><div class="line">483</div><div class="line">484</div><div class="line">485</div><div class="line">486</div><div class="line">487</div><div class="line">488</div><div class="line">489</div><div class="line">490</div><div class="line">491</div><div class="line">492</div><div class="line">493</div><div class="line">494</div><div class="line">495</div><div class="line">496</div><div class="line">497</div><div class="line">498</div><div class="line">499</div><div class="line">500</div><div class="line">501</div><div class="line">502</div><div class="line">503</div><div class="line">504</div><div class="line">505</div><div class="line">506</div><div class="line">507</div><div class="line">508</div><div class="line">509</div><div class="line">510</div><div class="line">511</div><div class="line">512</div><div class="line">513</div><div class="line">514</div><div class="line">515</div><div class="line">516</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">typedef</span> <span class="keyword">enum</span>  &#123;</div><div class="line">    <span class="comment">// BEGIN(libdex-opcode-enum); GENERATED AUTOMATICALLY BY opcode-gen</span></div><div class="line">    OP_NOP                          = <span class="number">0x00</span>,</div><div class="line">    OP_MOVE                         = <span class="number">0x01</span>,</div><div class="line">    OP_MOVE_FROM16                  = <span class="number">0x02</span>,</div><div class="line">    OP_MOVE_16                      = <span class="number">0x03</span>,</div><div class="line">    OP_MOVE_WIDE                    = <span class="number">0x04</span>,</div><div class="line">    OP_MOVE_WIDE_FROM16             = <span class="number">0x05</span>,</div><div class="line">    OP_MOVE_WIDE_16                 = <span class="number">0x06</span>,</div><div class="line">    OP_MOVE_OBJECT                  = <span class="number">0x07</span>,</div><div class="line">    OP_MOVE_OBJECT_FROM16           = <span class="number">0x08</span>,</div><div class="line">    OP_MOVE_OBJECT_16               = <span class="number">0x09</span>,</div><div class="line">    OP_MOVE_RESULT                  = <span class="number">0x0a</span>,</div><div class="line">    OP_MOVE_RESULT_WIDE             = <span class="number">0x0b</span>,</div><div class="line">    OP_MOVE_RESULT_OBJECT           = <span class="number">0x0c</span>,</div><div class="line">    OP_MOVE_EXCEPTION               = <span class="number">0x0d</span>,</div><div class="line">    OP_RETURN_VOID                  = <span class="number">0x0e</span>,</div><div class="line">    OP_RETURN                       = <span class="number">0x0f</span>,</div><div class="line">    OP_RETURN_WIDE                  = <span class="number">0x10</span>,</div><div class="line">    OP_RETURN_OBJECT                = <span class="number">0x11</span>,</div><div class="line">    OP_CONST_4                      = <span class="number">0x12</span>,</div><div class="line">    OP_CONST_16                     = <span class="number">0x13</span>,</div><div class="line">    OP_CONST                        = <span class="number">0x14</span>,</div><div class="line">    OP_CONST_HIGH16                 = <span class="number">0x15</span>,</div><div class="line">    OP_CONST_WIDE_16                = <span class="number">0x16</span>,</div><div class="line">    OP_CONST_WIDE_32                = <span class="number">0x17</span>,</div><div class="line">    OP_CONST_WIDE                   = <span class="number">0x18</span>,</div><div class="line">    OP_CONST_WIDE_HIGH16            = <span class="number">0x19</span>,</div><div class="line">    OP_CONST_STRING                 = <span class="number">0x1a</span>,</div><div class="line">    OP_CONST_STRING_JUMBO           = <span class="number">0x1b</span>,</div><div class="line">    OP_CONST_CLASS                  = <span class="number">0x1c</span>,</div><div class="line">    OP_MONITOR_ENTER                = <span class="number">0x1d</span>,</div><div class="line">    OP_MONITOR_EXIT                 = <span class="number">0x1e</span>,</div><div class="line">    OP_CHECK_CAST                   = <span class="number">0x1f</span>,</div><div class="line">    OP_INSTANCE_OF                  = <span class="number">0x20</span>,</div><div class="line">    OP_ARRAY_LENGTH                 = <span class="number">0x21</span>,</div><div class="line">    OP_NEW_INSTANCE                 = <span class="number">0x22</span>,</div><div class="line">    OP_NEW_ARRAY                    = <span class="number">0x23</span>,</div><div class="line">    OP_FILLED_NEW_ARRAY             = <span class="number">0x24</span>,</div><div class="line">    OP_FILLED_NEW_ARRAY_RANGE       = <span class="number">0x25</span>,</div><div class="line">    OP_FILL_ARRAY_DATA              = <span class="number">0x26</span>,</div><div class="line">    OP_THROW                        = <span class="number">0x27</span>,</div><div class="line">    OP_GOTO                         = <span class="number">0x28</span>,</div><div class="line">    OP_GOTO_16                      = <span class="number">0x29</span>,</div><div class="line">    OP_GOTO_32                      = <span class="number">0x2a</span>,</div><div class="line">    OP_PACKED_SWITCH                = <span class="number">0x2b</span>,</div><div class="line">    OP_SPARSE_SWITCH                = <span class="number">0x2c</span>,</div><div class="line">    OP_CMPL_FLOAT                   = <span class="number">0x2d</span>,</div><div class="line">    OP_CMPG_FLOAT                   = <span class="number">0x2e</span>,</div><div class="line">    OP_CMPL_DOUBLE                  = <span class="number">0x2f</span>,</div><div class="line">    OP_CMPG_DOUBLE                  = <span class="number">0x30</span>,</div><div class="line">    OP_CMP_LONG                     = <span class="number">0x31</span>,</div><div class="line">    OP_IF_EQ                        = <span class="number">0x32</span>,</div><div class="line">    OP_IF_NE                        = <span class="number">0x33</span>,</div><div class="line">    OP_IF_LT                        = <span class="number">0x34</span>,</div><div class="line">    OP_IF_GE                        = <span class="number">0x35</span>,</div><div class="line">    OP_IF_GT                        = <span class="number">0x36</span>,</div><div class="line">    OP_IF_LE                        = <span class="number">0x37</span>,</div><div class="line">    OP_IF_EQZ                       = <span class="number">0x38</span>,</div><div class="line">    OP_IF_NEZ                       = <span class="number">0x39</span>,</div><div class="line">    OP_IF_LTZ                       = <span class="number">0x3a</span>,</div><div class="line">    OP_IF_GEZ                       = <span class="number">0x3b</span>,</div><div class="line">    OP_IF_GTZ                       = <span class="number">0x3c</span>,</div><div class="line">    OP_IF_LEZ                       = <span class="number">0x3d</span>,</div><div class="line">    OP_UNUSED_3E                    = <span class="number">0x3e</span>,</div><div class="line">    OP_UNUSED_3F                    = <span class="number">0x3f</span>,</div><div class="line">    OP_UNUSED_40                    = <span class="number">0x40</span>,</div><div class="line">    OP_UNUSED_41                    = <span class="number">0x41</span>,</div><div class="line">    OP_UNUSED_42                    = <span class="number">0x42</span>,</div><div class="line">    OP_UNUSED_43                    = <span class="number">0x43</span>,</div><div class="line">    OP_AGET                         = <span class="number">0x44</span>,</div><div class="line">    OP_AGET_WIDE                    = <span class="number">0x45</span>,</div><div class="line">    OP_AGET_OBJECT                  = <span class="number">0x46</span>,</div><div class="line">    OP_AGET_BOOLEAN                 = <span class="number">0x47</span>,</div><div class="line">    OP_AGET_BYTE                    = <span class="number">0x48</span>,</div><div class="line">    OP_AGET_CHAR                    = <span class="number">0x49</span>,</div><div class="line">    OP_AGET_SHORT                   = <span class="number">0x4a</span>,</div><div class="line">    OP_APUT                         = <span class="number">0x4b</span>,</div><div class="line">    OP_APUT_WIDE                    = <span class="number">0x4c</span>,</div><div class="line">    OP_APUT_OBJECT                  = <span class="number">0x4d</span>,</div><div class="line">    OP_APUT_BOOLEAN                 = <span class="number">0x4e</span>,</div><div class="line">    OP_APUT_BYTE                    = <span class="number">0x4f</span>,</div><div class="line">    OP_APUT_CHAR                    = <span class="number">0x50</span>,</div><div class="line">    OP_APUT_SHORT                   = <span class="number">0x51</span>,</div><div class="line">    OP_IGET                         = <span class="number">0x52</span>,</div><div class="line">    OP_IGET_WIDE                    = <span class="number">0x53</span>,</div><div class="line">    OP_IGET_OBJECT                  = <span class="number">0x54</span>,</div><div class="line">    OP_IGET_BOOLEAN                 = <span class="number">0x55</span>,</div><div class="line">    OP_IGET_BYTE                    = <span class="number">0x56</span>,</div><div class="line">    OP_IGET_CHAR                    = <span class="number">0x57</span>,</div><div class="line">    OP_IGET_SHORT                   = <span class="number">0x58</span>,</div><div class="line">    OP_IPUT                         = <span class="number">0x59</span>,</div><div class="line">    OP_IPUT_WIDE                    = <span class="number">0x5a</span>,</div><div class="line">    OP_IPUT_OBJECT                  = <span class="number">0x5b</span>,</div><div class="line">    OP_IPUT_BOOLEAN                 = <span class="number">0x5c</span>,</div><div class="line">    OP_IPUT_BYTE                    = <span class="number">0x5d</span>,</div><div class="line">    OP_IPUT_CHAR                    = <span class="number">0x5e</span>,</div><div class="line">    OP_IPUT_SHORT                   = <span class="number">0x5f</span>,</div><div class="line">    OP_SGET                         = <span class="number">0x60</span>,</div><div class="line">    OP_SGET_WIDE                    = <span class="number">0x61</span>,</div><div class="line">    OP_SGET_OBJECT                  = <span class="number">0x62</span>,</div><div class="line">    OP_SGET_BOOLEAN                 = <span class="number">0x63</span>,</div><div class="line">    OP_SGET_BYTE                    = <span class="number">0x64</span>,</div><div class="line">    OP_SGET_CHAR                    = <span class="number">0x65</span>,</div><div class="line">    OP_SGET_SHORT                   = <span class="number">0x66</span>,</div><div class="line">    OP_SPUT                         = <span class="number">0x67</span>,</div><div class="line">    OP_SPUT_WIDE                    = <span class="number">0x68</span>,</div><div class="line">    OP_SPUT_OBJECT                  = <span class="number">0x69</span>,</div><div class="line">    OP_SPUT_BOOLEAN                 = <span class="number">0x6a</span>,</div><div class="line">    OP_SPUT_BYTE                    = <span class="number">0x6b</span>,</div><div class="line">    OP_SPUT_CHAR                    = <span class="number">0x6c</span>,</div><div class="line">    OP_SPUT_SHORT                   = <span class="number">0x6d</span>,</div><div class="line">    OP_INVOKE_VIRTUAL               = <span class="number">0x6e</span>,</div><div class="line">    OP_INVOKE_SUPER                 = <span class="number">0x6f</span>,</div><div class="line">    OP_INVOKE_DIRECT                = <span class="number">0x70</span>,</div><div class="line">    OP_INVOKE_STATIC                = <span class="number">0x71</span>,</div><div class="line">    OP_INVOKE_INTERFACE             = <span class="number">0x72</span>,</div><div class="line">    OP_UNUSED_73                    = <span class="number">0x73</span>,</div><div class="line">    OP_INVOKE_VIRTUAL_RANGE         = <span class="number">0x74</span>,</div><div class="line">    OP_INVOKE_SUPER_RANGE           = <span class="number">0x75</span>,</div><div class="line">    OP_INVOKE_DIRECT_RANGE          = <span class="number">0x76</span>,</div><div class="line">    OP_INVOKE_STATIC_RANGE          = <span class="number">0x77</span>,</div><div class="line">    OP_INVOKE_INTERFACE_RANGE       = <span class="number">0x78</span>,</div><div class="line">    OP_UNUSED_79                    = <span class="number">0x79</span>,</div><div class="line">    OP_UNUSED_7A                    = <span class="number">0x7a</span>,</div><div class="line">    OP_NEG_INT                      = <span class="number">0x7b</span>,</div><div class="line">    OP_NOT_INT                      = <span class="number">0x7c</span>,</div><div class="line">    OP_NEG_LONG                     = <span class="number">0x7d</span>,</div><div class="line">    OP_NOT_LONG                     = <span class="number">0x7e</span>,</div><div class="line">    OP_NEG_FLOAT                    = <span class="number">0x7f</span>,</div><div class="line">    OP_NEG_DOUBLE                   = <span class="number">0x80</span>,</div><div class="line">    OP_INT_TO_LONG                  = <span class="number">0x81</span>,</div><div class="line">    OP_INT_TO_FLOAT                 = <span class="number">0x82</span>,</div><div class="line">    OP_INT_TO_DOUBLE                = <span class="number">0x83</span>,</div><div class="line">    OP_LONG_TO_INT                  = <span class="number">0x84</span>,</div><div class="line">    OP_LONG_TO_FLOAT                = <span class="number">0x85</span>,</div><div class="line">    OP_LONG_TO_DOUBLE               = <span class="number">0x86</span>,</div><div class="line">    OP_FLOAT_TO_INT                 = <span class="number">0x87</span>,</div><div class="line">    OP_FLOAT_TO_LONG                = <span class="number">0x88</span>,</div><div class="line">    OP_FLOAT_TO_DOUBLE              = <span class="number">0x89</span>,</div><div class="line">    OP_DOUBLE_TO_INT                = <span class="number">0x8a</span>,</div><div class="line">    OP_DOUBLE_TO_LONG               = <span class="number">0x8b</span>,</div><div class="line">    OP_DOUBLE_TO_FLOAT              = <span class="number">0x8c</span>,</div><div class="line">    OP_INT_TO_BYTE                  = <span class="number">0x8d</span>,</div><div class="line">    OP_INT_TO_CHAR                  = <span class="number">0x8e</span>,</div><div class="line">    OP_INT_TO_SHORT                 = <span class="number">0x8f</span>,</div><div class="line">    OP_ADD_INT                      = <span class="number">0x90</span>,</div><div class="line">    OP_SUB_INT                      = <span class="number">0x91</span>,</div><div class="line">    OP_MUL_INT                      = <span class="number">0x92</span>,</div><div class="line">    OP_DIV_INT                      = <span class="number">0x93</span>,</div><div class="line">    OP_REM_INT                      = <span class="number">0x94</span>,</div><div class="line">    OP_AND_INT                      = <span class="number">0x95</span>,</div><div class="line">    OP_OR_INT                       = <span class="number">0x96</span>,</div><div class="line">    OP_XOR_INT                      = <span class="number">0x97</span>,</div><div class="line">    OP_SHL_INT                      = <span class="number">0x98</span>,</div><div class="line">    OP_SHR_INT                      = <span class="number">0x99</span>,</div><div class="line">    OP_USHR_INT                     = <span class="number">0x9a</span>,</div><div class="line">    OP_ADD_LONG                     = <span class="number">0x9b</span>,</div><div class="line">    OP_SUB_LONG                     = <span class="number">0x9c</span>,</div><div class="line">    OP_MUL_LONG                     = <span class="number">0x9d</span>,</div><div class="line">    OP_DIV_LONG                     = <span class="number">0x9e</span>,</div><div class="line">    OP_REM_LONG                     = <span class="number">0x9f</span>,</div><div class="line">    OP_AND_LONG                     = <span class="number">0xa0</span>,</div><div class="line">    OP_OR_LONG                      = <span class="number">0xa1</span>,</div><div class="line">    OP_XOR_LONG                     = <span class="number">0xa2</span>,</div><div class="line">    OP_SHL_LONG                     = <span class="number">0xa3</span>,</div><div class="line">    OP_SHR_LONG                     = <span class="number">0xa4</span>,</div><div class="line">    OP_USHR_LONG                    = <span class="number">0xa5</span>,</div><div class="line">    OP_ADD_FLOAT                    = <span class="number">0xa6</span>,</div><div class="line">    OP_SUB_FLOAT                    = <span class="number">0xa7</span>,</div><div class="line">    OP_MUL_FLOAT                    = <span class="number">0xa8</span>,</div><div class="line">    OP_DIV_FLOAT                    = <span class="number">0xa9</span>,</div><div class="line">    OP_REM_FLOAT                    = <span class="number">0xaa</span>,</div><div class="line">    OP_ADD_DOUBLE                   = <span class="number">0xab</span>,</div><div class="line">    OP_SUB_DOUBLE                   = <span class="number">0xac</span>,</div><div class="line">    OP_MUL_DOUBLE                   = <span class="number">0xad</span>,</div><div class="line">    OP_DIV_DOUBLE                   = <span class="number">0xae</span>,</div><div class="line">    OP_REM_DOUBLE                   = <span class="number">0xaf</span>,</div><div class="line">    OP_ADD_INT_2ADDR                = <span class="number">0xb0</span>,</div><div class="line">    OP_SUB_INT_2ADDR                = <span class="number">0xb1</span>,</div><div class="line">    OP_MUL_INT_2ADDR                = <span class="number">0xb2</span>,</div><div class="line">    OP_DIV_INT_2ADDR                = <span class="number">0xb3</span>,</div><div class="line">    OP_REM_INT_2ADDR                = <span class="number">0xb4</span>,</div><div class="line">    OP_AND_INT_2ADDR                = <span class="number">0xb5</span>,</div><div class="line">    OP_OR_INT_2ADDR                 = <span class="number">0xb6</span>,</div><div class="line">    OP_XOR_INT_2ADDR                = <span class="number">0xb7</span>,</div><div class="line">    OP_SHL_INT_2ADDR                = <span class="number">0xb8</span>,</div><div class="line">    OP_SHR_INT_2ADDR                = <span class="number">0xb9</span>,</div><div class="line">    OP_USHR_INT_2ADDR               = <span class="number">0xba</span>,</div><div class="line">    OP_ADD_LONG_2ADDR               = <span class="number">0xbb</span>,</div><div class="line">    OP_SUB_LONG_2ADDR               = <span class="number">0xbc</span>,</div><div class="line">    OP_MUL_LONG_2ADDR               = <span class="number">0xbd</span>,</div><div class="line">    OP_DIV_LONG_2ADDR               = <span class="number">0xbe</span>,</div><div class="line">    OP_REM_LONG_2ADDR               = <span class="number">0xbf</span>,</div><div class="line">    OP_AND_LONG_2ADDR               = <span class="number">0xc0</span>,</div><div class="line">    OP_OR_LONG_2ADDR                = <span class="number">0xc1</span>,</div><div class="line">    OP_XOR_LONG_2ADDR               = <span class="number">0xc2</span>,</div><div class="line">    OP_SHL_LONG_2ADDR               = <span class="number">0xc3</span>,</div><div class="line">    OP_SHR_LONG_2ADDR               = <span class="number">0xc4</span>,</div><div class="line">    OP_USHR_LONG_2ADDR              = <span class="number">0xc5</span>,</div><div class="line">    OP_ADD_FLOAT_2ADDR              = <span class="number">0xc6</span>,</div><div class="line">    OP_SUB_FLOAT_2ADDR              = <span class="number">0xc7</span>,</div><div class="line">    OP_MUL_FLOAT_2ADDR              = <span class="number">0xc8</span>,</div><div class="line">    OP_DIV_FLOAT_2ADDR              = <span class="number">0xc9</span>,</div><div class="line">    OP_REM_FLOAT_2ADDR              = <span class="number">0xca</span>,</div><div class="line">    OP_ADD_DOUBLE_2ADDR             = <span class="number">0xcb</span>,</div><div class="line">    OP_SUB_DOUBLE_2ADDR             = <span class="number">0xcc</span>,</div><div class="line">    OP_MUL_DOUBLE_2ADDR             = <span class="number">0xcd</span>,</div><div class="line">    OP_DIV_DOUBLE_2ADDR             = <span class="number">0xce</span>,</div><div class="line">    OP_REM_DOUBLE_2ADDR             = <span class="number">0xcf</span>,</div><div class="line">    OP_ADD_INT_LIT16                = <span class="number">0xd0</span>,</div><div class="line">    OP_RSUB_INT                     = <span class="number">0xd1</span>,</div><div class="line">    OP_MUL_INT_LIT16                = <span class="number">0xd2</span>,</div><div class="line">    OP_DIV_INT_LIT16                = <span class="number">0xd3</span>,</div><div class="line">    OP_REM_INT_LIT16                = <span class="number">0xd4</span>,</div><div class="line">    OP_AND_INT_LIT16                = <span class="number">0xd5</span>,</div><div class="line">    OP_OR_INT_LIT16                 = <span class="number">0xd6</span>,</div><div class="line">    OP_XOR_INT_LIT16                = <span class="number">0xd7</span>,</div><div class="line">    OP_ADD_INT_LIT8                 = <span class="number">0xd8</span>,</div><div class="line">    OP_RSUB_INT_LIT8                = <span class="number">0xd9</span>,</div><div class="line">    OP_MUL_INT_LIT8                 = <span class="number">0xda</span>,</div><div class="line">    OP_DIV_INT_LIT8                 = <span class="number">0xdb</span>,</div><div class="line">    OP_REM_INT_LIT8                 = <span class="number">0xdc</span>,</div><div class="line">    OP_AND_INT_LIT8                 = <span class="number">0xdd</span>,</div><div class="line">    OP_OR_INT_LIT8                  = <span class="number">0xde</span>,</div><div class="line">    OP_XOR_INT_LIT8                 = <span class="number">0xdf</span>,</div><div class="line">    OP_SHL_INT_LIT8                 = <span class="number">0xe0</span>,</div><div class="line">    OP_SHR_INT_LIT8                 = <span class="number">0xe1</span>,</div><div class="line">    OP_USHR_INT_LIT8                = <span class="number">0xe2</span>,</div><div class="line">    OP_IGET_VOLATILE                = <span class="number">0xe3</span>,</div><div class="line">    OP_IPUT_VOLATILE                = <span class="number">0xe4</span>,</div><div class="line">    OP_SGET_VOLATILE                = <span class="number">0xe5</span>,</div><div class="line">    OP_SPUT_VOLATILE                = <span class="number">0xe6</span>,</div><div class="line">    OP_IGET_OBJECT_VOLATILE         = <span class="number">0xe7</span>,</div><div class="line">    OP_IGET_WIDE_VOLATILE           = <span class="number">0xe8</span>,</div><div class="line">    OP_IPUT_WIDE_VOLATILE           = <span class="number">0xe9</span>,</div><div class="line">    OP_SGET_WIDE_VOLATILE           = <span class="number">0xea</span>,</div><div class="line">    OP_SPUT_WIDE_VOLATILE           = <span class="number">0xeb</span>,</div><div class="line">    OP_BREAKPOINT                   = <span class="number">0xec</span>,</div><div class="line">    OP_THROW_VERIFICATION_ERROR     = <span class="number">0xed</span>,</div><div class="line">    OP_EXECUTE_INLINE               = <span class="number">0xee</span>,</div><div class="line">    OP_EXECUTE_INLINE_RANGE         = <span class="number">0xef</span>,</div><div class="line">    OP_INVOKE_OBJECT_INIT_RANGE     = <span class="number">0xf0</span>,</div><div class="line">    OP_RETURN_VOID_BARRIER          = <span class="number">0xf1</span>,</div><div class="line">    OP_IGET_QUICK                   = <span class="number">0xf2</span>,</div><div class="line">    OP_IGET_WIDE_QUICK              = <span class="number">0xf3</span>,</div><div class="line">    OP_IGET_OBJECT_QUICK            = <span class="number">0xf4</span>,</div><div class="line">    OP_IPUT_QUICK                   = <span class="number">0xf5</span>,</div><div class="line">    OP_IPUT_WIDE_QUICK              = <span class="number">0xf6</span>,</div><div class="line">    OP_IPUT_OBJECT_QUICK            = <span class="number">0xf7</span>,</div><div class="line">    OP_INVOKE_VIRTUAL_QUICK         = <span class="number">0xf8</span>,</div><div class="line">    OP_INVOKE_VIRTUAL_QUICK_RANGE   = <span class="number">0xf9</span>,</div><div class="line">    OP_INVOKE_SUPER_QUICK           = <span class="number">0xfa</span>,</div><div class="line">    OP_INVOKE_SUPER_QUICK_RANGE     = <span class="number">0xfb</span>,</div><div class="line">    OP_IPUT_OBJECT_VOLATILE         = <span class="number">0xfc</span>,</div><div class="line">    OP_SGET_OBJECT_VOLATILE         = <span class="number">0xfd</span>,</div><div class="line">    OP_SPUT_OBJECT_VOLATILE         = <span class="number">0xfe</span>,</div><div class="line">    OP_DISPATCH_FF                  = <span class="number">0xff</span>,</div><div class="line">    OP_CONST_CLASS_JUMBO            = <span class="number">0x100</span>,</div><div class="line">    OP_CHECK_CAST_JUMBO             = <span class="number">0x101</span>,</div><div class="line">    OP_INSTANCE_OF_JUMBO            = <span class="number">0x102</span>,</div><div class="line">    OP_NEW_INSTANCE_JUMBO           = <span class="number">0x103</span>,</div><div class="line">    OP_NEW_ARRAY_JUMBO              = <span class="number">0x104</span>,</div><div class="line">    OP_FILLED_NEW_ARRAY_JUMBO       = <span class="number">0x105</span>,</div><div class="line">    OP_IGET_JUMBO                   = <span class="number">0x106</span>,</div><div class="line">    OP_IGET_WIDE_JUMBO              = <span class="number">0x107</span>,</div><div class="line">    OP_IGET_OBJECT_JUMBO            = <span class="number">0x108</span>,</div><div class="line">    OP_IGET_BOOLEAN_JUMBO           = <span class="number">0x109</span>,</div><div class="line">    OP_IGET_BYTE_JUMBO              = <span class="number">0x10a</span>,</div><div class="line">    OP_IGET_CHAR_JUMBO              = <span class="number">0x10b</span>,</div><div class="line">    OP_IGET_SHORT_JUMBO             = <span class="number">0x10c</span>,</div><div class="line">    OP_IPUT_JUMBO                   = <span class="number">0x10d</span>,</div><div class="line">    OP_IPUT_WIDE_JUMBO              = <span class="number">0x10e</span>,</div><div class="line">    OP_IPUT_OBJECT_JUMBO            = <span class="number">0x10f</span>,</div><div class="line">    OP_IPUT_BOOLEAN_JUMBO           = <span class="number">0x110</span>,</div><div class="line">    OP_IPUT_BYTE_JUMBO              = <span class="number">0x111</span>,</div><div class="line">    OP_IPUT_CHAR_JUMBO              = <span class="number">0x112</span>,</div><div class="line">    OP_IPUT_SHORT_JUMBO             = <span class="number">0x113</span>,</div><div class="line">    OP_SGET_JUMBO                   = <span class="number">0x114</span>,</div><div class="line">    OP_SGET_WIDE_JUMBO              = <span class="number">0x115</span>,</div><div class="line">    OP_SGET_OBJECT_JUMBO            = <span class="number">0x116</span>,</div><div class="line">    OP_SGET_BOOLEAN_JUMBO           = <span class="number">0x117</span>,</div><div class="line">    OP_SGET_BYTE_JUMBO              = <span class="number">0x118</span>,</div><div class="line">    OP_SGET_CHAR_JUMBO              = <span class="number">0x119</span>,</div><div class="line">    OP_SGET_SHORT_JUMBO             = <span class="number">0x11a</span>,</div><div class="line">    OP_SPUT_JUMBO                   = <span class="number">0x11b</span>,</div><div class="line">    OP_SPUT_WIDE_JUMBO              = <span class="number">0x11c</span>,</div><div class="line">    OP_SPUT_OBJECT_JUMBO            = <span class="number">0x11d</span>,</div><div class="line">    OP_SPUT_BOOLEAN_JUMBO           = <span class="number">0x11e</span>,</div><div class="line">    OP_SPUT_BYTE_JUMBO              = <span class="number">0x11f</span>,</div><div class="line">    OP_SPUT_CHAR_JUMBO              = <span class="number">0x120</span>,</div><div class="line">    OP_SPUT_SHORT_JUMBO             = <span class="number">0x121</span>,</div><div class="line">    OP_INVOKE_VIRTUAL_JUMBO         = <span class="number">0x122</span>,</div><div class="line">    OP_INVOKE_SUPER_JUMBO           = <span class="number">0x123</span>,</div><div class="line">    OP_INVOKE_DIRECT_JUMBO          = <span class="number">0x124</span>,</div><div class="line">    OP_INVOKE_STATIC_JUMBO          = <span class="number">0x125</span>,</div><div class="line">    OP_INVOKE_INTERFACE_JUMBO       = <span class="number">0x126</span>,</div><div class="line">    OP_UNUSED_27FF                  = <span class="number">0x127</span>,</div><div class="line">    OP_UNUSED_28FF                  = <span class="number">0x128</span>,</div><div class="line">    OP_UNUSED_29FF                  = <span class="number">0x129</span>,</div><div class="line">    OP_UNUSED_2AFF                  = <span class="number">0x12a</span>,</div><div class="line">    OP_UNUSED_2BFF                  = <span class="number">0x12b</span>,</div><div class="line">    OP_UNUSED_2CFF                  = <span class="number">0x12c</span>,</div><div class="line">    OP_UNUSED_2DFF                  = <span class="number">0x12d</span>,</div><div class="line">    OP_UNUSED_2EFF                  = <span class="number">0x12e</span>,</div><div class="line">    OP_UNUSED_2FFF                  = <span class="number">0x12f</span>,</div><div class="line">    OP_UNUSED_30FF                  = <span class="number">0x130</span>,</div><div class="line">    OP_UNUSED_31FF                  = <span class="number">0x131</span>,</div><div class="line">    OP_UNUSED_32FF                  = <span class="number">0x132</span>,</div><div class="line">    OP_UNUSED_33FF                  = <span class="number">0x133</span>,</div><div class="line">    OP_UNUSED_34FF                  = <span class="number">0x134</span>,</div><div class="line">    OP_UNUSED_35FF                  = <span class="number">0x135</span>,</div><div class="line">    OP_UNUSED_36FF                  = <span class="number">0x136</span>,</div><div class="line">    OP_UNUSED_37FF                  = <span class="number">0x137</span>,</div><div class="line">    OP_UNUSED_38FF                  = <span class="number">0x138</span>,</div><div class="line">    OP_UNUSED_39FF                  = <span class="number">0x139</span>,</div><div class="line">    OP_UNUSED_3AFF                  = <span class="number">0x13a</span>,</div><div class="line">    OP_UNUSED_3BFF                  = <span class="number">0x13b</span>,</div><div class="line">    OP_UNUSED_3CFF                  = <span class="number">0x13c</span>,</div><div class="line">    OP_UNUSED_3DFF                  = <span class="number">0x13d</span>,</div><div class="line">    OP_UNUSED_3EFF                  = <span class="number">0x13e</span>,</div><div class="line">    OP_UNUSED_3FFF                  = <span class="number">0x13f</span>,</div><div class="line">    OP_UNUSED_40FF                  = <span class="number">0x140</span>,</div><div class="line">    OP_UNUSED_41FF                  = <span class="number">0x141</span>,</div><div class="line">    OP_UNUSED_42FF                  = <span class="number">0x142</span>,</div><div class="line">    OP_UNUSED_43FF                  = <span class="number">0x143</span>,</div><div class="line">    OP_UNUSED_44FF                  = <span class="number">0x144</span>,</div><div class="line">    OP_UNUSED_45FF                  = <span class="number">0x145</span>,</div><div class="line">    OP_UNUSED_46FF                  = <span class="number">0x146</span>,</div><div class="line">    OP_UNUSED_47FF                  = <span class="number">0x147</span>,</div><div class="line">    OP_UNUSED_48FF                  = <span class="number">0x148</span>,</div><div class="line">    OP_UNUSED_49FF                  = <span class="number">0x149</span>,</div><div class="line">    OP_UNUSED_4AFF                  = <span class="number">0x14a</span>,</div><div class="line">    OP_UNUSED_4BFF                  = <span class="number">0x14b</span>,</div><div class="line">    OP_UNUSED_4CFF                  = <span class="number">0x14c</span>,</div><div class="line">    OP_UNUSED_4DFF                  = <span class="number">0x14d</span>,</div><div class="line">    OP_UNUSED_4EFF                  = <span class="number">0x14e</span>,</div><div class="line">    OP_UNUSED_4FFF                  = <span class="number">0x14f</span>,</div><div class="line">    OP_UNUSED_50FF                  = <span class="number">0x150</span>,</div><div class="line">    OP_UNUSED_51FF                  = <span class="number">0x151</span>,</div><div class="line">    OP_UNUSED_52FF                  = <span class="number">0x152</span>,</div><div class="line">    OP_UNUSED_53FF                  = <span class="number">0x153</span>,</div><div class="line">    OP_UNUSED_54FF                  = <span class="number">0x154</span>,</div><div class="line">    OP_UNUSED_55FF                  = <span class="number">0x155</span>,</div><div class="line">    OP_UNUSED_56FF                  = <span class="number">0x156</span>,</div><div class="line">    OP_UNUSED_57FF                  = <span class="number">0x157</span>,</div><div class="line">    OP_UNUSED_58FF                  = <span class="number">0x158</span>,</div><div class="line">    OP_UNUSED_59FF                  = <span class="number">0x159</span>,</div><div class="line">    OP_UNUSED_5AFF                  = <span class="number">0x15a</span>,</div><div class="line">    OP_UNUSED_5BFF                  = <span class="number">0x15b</span>,</div><div class="line">    OP_UNUSED_5CFF                  = <span class="number">0x15c</span>,</div><div class="line">    OP_UNUSED_5DFF                  = <span class="number">0x15d</span>,</div><div class="line">    OP_UNUSED_5EFF                  = <span class="number">0x15e</span>,</div><div class="line">    OP_UNUSED_5FFF                  = <span class="number">0x15f</span>,</div><div class="line">    OP_UNUSED_60FF                  = <span class="number">0x160</span>,</div><div class="line">    OP_UNUSED_61FF                  = <span class="number">0x161</span>,</div><div class="line">    OP_UNUSED_62FF                  = <span class="number">0x162</span>,</div><div class="line">    OP_UNUSED_63FF                  = <span class="number">0x163</span>,</div><div class="line">    OP_UNUSED_64FF                  = <span class="number">0x164</span>,</div><div class="line">    OP_UNUSED_65FF                  = <span class="number">0x165</span>,</div><div class="line">    OP_UNUSED_66FF                  = <span class="number">0x166</span>,</div><div class="line">    OP_UNUSED_67FF                  = <span class="number">0x167</span>,</div><div class="line">    OP_UNUSED_68FF                  = <span class="number">0x168</span>,</div><div class="line">    OP_UNUSED_69FF                  = <span class="number">0x169</span>,</div><div class="line">    OP_UNUSED_6AFF                  = <span class="number">0x16a</span>,</div><div class="line">    OP_UNUSED_6BFF                  = <span class="number">0x16b</span>,</div><div class="line">    OP_UNUSED_6CFF                  = <span class="number">0x16c</span>,</div><div class="line">    OP_UNUSED_6DFF                  = <span class="number">0x16d</span>,</div><div class="line">    OP_UNUSED_6EFF                  = <span class="number">0x16e</span>,</div><div class="line">    OP_UNUSED_6FFF                  = <span class="number">0x16f</span>,</div><div class="line">    OP_UNUSED_70FF                  = <span class="number">0x170</span>,</div><div class="line">    OP_UNUSED_71FF                  = <span class="number">0x171</span>,</div><div class="line">    OP_UNUSED_72FF                  = <span class="number">0x172</span>,</div><div class="line">    OP_UNUSED_73FF                  = <span class="number">0x173</span>,</div><div class="line">    OP_UNUSED_74FF                  = <span class="number">0x174</span>,</div><div class="line">    OP_UNUSED_75FF                  = <span class="number">0x175</span>,</div><div class="line">    OP_UNUSED_76FF                  = <span class="number">0x176</span>,</div><div class="line">    OP_UNUSED_77FF                  = <span class="number">0x177</span>,</div><div class="line">    OP_UNUSED_78FF                  = <span class="number">0x178</span>,</div><div class="line">    OP_UNUSED_79FF                  = <span class="number">0x179</span>,</div><div class="line">    OP_UNUSED_7AFF                  = <span class="number">0x17a</span>,</div><div class="line">    OP_UNUSED_7BFF                  = <span class="number">0x17b</span>,</div><div class="line">    OP_UNUSED_7CFF                  = <span class="number">0x17c</span>,</div><div class="line">    OP_UNUSED_7DFF                  = <span class="number">0x17d</span>,</div><div class="line">    OP_UNUSED_7EFF                  = <span class="number">0x17e</span>,</div><div class="line">    OP_UNUSED_7FFF                  = <span class="number">0x17f</span>,</div><div class="line">    OP_UNUSED_80FF                  = <span class="number">0x180</span>,</div><div class="line">    OP_UNUSED_81FF                  = <span class="number">0x181</span>,</div><div class="line">    OP_UNUSED_82FF                  = <span class="number">0x182</span>,</div><div class="line">    OP_UNUSED_83FF                  = <span class="number">0x183</span>,</div><div class="line">    OP_UNUSED_84FF                  = <span class="number">0x184</span>,</div><div class="line">    OP_UNUSED_85FF                  = <span class="number">0x185</span>,</div><div class="line">    OP_UNUSED_86FF                  = <span class="number">0x186</span>,</div><div class="line">    OP_UNUSED_87FF                  = <span class="number">0x187</span>,</div><div class="line">    OP_UNUSED_88FF                  = <span class="number">0x188</span>,</div><div class="line">    OP_UNUSED_89FF                  = <span class="number">0x189</span>,</div><div class="line">    OP_UNUSED_8AFF                  = <span class="number">0x18a</span>,</div><div class="line">    OP_UNUSED_8BFF                  = <span class="number">0x18b</span>,</div><div class="line">    OP_UNUSED_8CFF                  = <span class="number">0x18c</span>,</div><div class="line">    OP_UNUSED_8DFF                  = <span class="number">0x18d</span>,</div><div class="line">    OP_UNUSED_8EFF                  = <span class="number">0x18e</span>,</div><div class="line">    OP_UNUSED_8FFF                  = <span class="number">0x18f</span>,</div><div class="line">    OP_UNUSED_90FF                  = <span class="number">0x190</span>,</div><div class="line">    OP_UNUSED_91FF                  = <span class="number">0x191</span>,</div><div class="line">    OP_UNUSED_92FF                  = <span class="number">0x192</span>,</div><div class="line">    OP_UNUSED_93FF                  = <span class="number">0x193</span>,</div><div class="line">    OP_UNUSED_94FF                  = <span class="number">0x194</span>,</div><div class="line">    OP_UNUSED_95FF                  = <span class="number">0x195</span>,</div><div class="line">    OP_UNUSED_96FF                  = <span class="number">0x196</span>,</div><div class="line">    OP_UNUSED_97FF                  = <span class="number">0x197</span>,</div><div class="line">    OP_UNUSED_98FF                  = <span class="number">0x198</span>,</div><div class="line">    OP_UNUSED_99FF                  = <span class="number">0x199</span>,</div><div class="line">    OP_UNUSED_9AFF                  = <span class="number">0x19a</span>,</div><div class="line">    OP_UNUSED_9BFF                  = <span class="number">0x19b</span>,</div><div class="line">    OP_UNUSED_9CFF                  = <span class="number">0x19c</span>,</div><div class="line">    OP_UNUSED_9DFF                  = <span class="number">0x19d</span>,</div><div class="line">    OP_UNUSED_9EFF                  = <span class="number">0x19e</span>,</div><div class="line">    OP_UNUSED_9FFF                  = <span class="number">0x19f</span>,</div><div class="line">    OP_UNUSED_A0FF                  = <span class="number">0x1a0</span>,</div><div class="line">    OP_UNUSED_A1FF                  = <span class="number">0x1a1</span>,</div><div class="line">    OP_UNUSED_A2FF                  = <span class="number">0x1a2</span>,</div><div class="line">    OP_UNUSED_A3FF                  = <span class="number">0x1a3</span>,</div><div class="line">    OP_UNUSED_A4FF                  = <span class="number">0x1a4</span>,</div><div class="line">    OP_UNUSED_A5FF                  = <span class="number">0x1a5</span>,</div><div class="line">    OP_UNUSED_A6FF                  = <span class="number">0x1a6</span>,</div><div class="line">    OP_UNUSED_A7FF                  = <span class="number">0x1a7</span>,</div><div class="line">    OP_UNUSED_A8FF                  = <span class="number">0x1a8</span>,</div><div class="line">    OP_UNUSED_A9FF                  = <span class="number">0x1a9</span>,</div><div class="line">    OP_UNUSED_AAFF                  = <span class="number">0x1aa</span>,</div><div class="line">    OP_UNUSED_ABFF                  = <span class="number">0x1ab</span>,</div><div class="line">    OP_UNUSED_ACFF                  = <span class="number">0x1ac</span>,</div><div class="line">    OP_UNUSED_ADFF                  = <span class="number">0x1ad</span>,</div><div class="line">    OP_UNUSED_AEFF                  = <span class="number">0x1ae</span>,</div><div class="line">    OP_UNUSED_AFFF                  = <span class="number">0x1af</span>,</div><div class="line">    OP_UNUSED_B0FF                  = <span class="number">0x1b0</span>,</div><div class="line">    OP_UNUSED_B1FF                  = <span class="number">0x1b1</span>,</div><div class="line">    OP_UNUSED_B2FF                  = <span class="number">0x1b2</span>,</div><div class="line">    OP_UNUSED_B3FF                  = <span class="number">0x1b3</span>,</div><div class="line">    OP_UNUSED_B4FF                  = <span class="number">0x1b4</span>,</div><div class="line">    OP_UNUSED_B5FF                  = <span class="number">0x1b5</span>,</div><div class="line">    OP_UNUSED_B6FF                  = <span class="number">0x1b6</span>,</div><div class="line">    OP_UNUSED_B7FF                  = <span class="number">0x1b7</span>,</div><div class="line">    OP_UNUSED_B8FF                  = <span class="number">0x1b8</span>,</div><div class="line">    OP_UNUSED_B9FF                  = <span class="number">0x1b9</span>,</div><div class="line">    OP_UNUSED_BAFF                  = <span class="number">0x1ba</span>,</div><div class="line">    OP_UNUSED_BBFF                  = <span class="number">0x1bb</span>,</div><div class="line">    OP_UNUSED_BCFF                  = <span class="number">0x1bc</span>,</div><div class="line">    OP_UNUSED_BDFF                  = <span class="number">0x1bd</span>,</div><div class="line">    OP_UNUSED_BEFF                  = <span class="number">0x1be</span>,</div><div class="line">    OP_UNUSED_BFFF                  = <span class="number">0x1bf</span>,</div><div class="line">    OP_UNUSED_C0FF                  = <span class="number">0x1c0</span>,</div><div class="line">    OP_UNUSED_C1FF                  = <span class="number">0x1c1</span>,</div><div class="line">    OP_UNUSED_C2FF                  = <span class="number">0x1c2</span>,</div><div class="line">    OP_UNUSED_C3FF                  = <span class="number">0x1c3</span>,</div><div class="line">    OP_UNUSED_C4FF                  = <span class="number">0x1c4</span>,</div><div class="line">    OP_UNUSED_C5FF                  = <span class="number">0x1c5</span>,</div><div class="line">    OP_UNUSED_C6FF                  = <span class="number">0x1c6</span>,</div><div class="line">    OP_UNUSED_C7FF                  = <span class="number">0x1c7</span>,</div><div class="line">    OP_UNUSED_C8FF                  = <span class="number">0x1c8</span>,</div><div class="line">    OP_UNUSED_C9FF                  = <span class="number">0x1c9</span>,</div><div class="line">    OP_UNUSED_CAFF                  = <span class="number">0x1ca</span>,</div><div class="line">    OP_UNUSED_CBFF                  = <span class="number">0x1cb</span>,</div><div class="line">    OP_UNUSED_CCFF                  = <span class="number">0x1cc</span>,</div><div class="line">    OP_UNUSED_CDFF                  = <span class="number">0x1cd</span>,</div><div class="line">    OP_UNUSED_CEFF                  = <span class="number">0x1ce</span>,</div><div class="line">    OP_UNUSED_CFFF                  = <span class="number">0x1cf</span>,</div><div class="line">    OP_UNUSED_D0FF                  = <span class="number">0x1d0</span>,</div><div class="line">    OP_UNUSED_D1FF                  = <span class="number">0x1d1</span>,</div><div class="line">    OP_UNUSED_D2FF                  = <span class="number">0x1d2</span>,</div><div class="line">    OP_UNUSED_D3FF                  = <span class="number">0x1d3</span>,</div><div class="line">    OP_UNUSED_D4FF                  = <span class="number">0x1d4</span>,</div><div class="line">    OP_UNUSED_D5FF                  = <span class="number">0x1d5</span>,</div><div class="line">    OP_UNUSED_D6FF                  = <span class="number">0x1d6</span>,</div><div class="line">    OP_UNUSED_D7FF                  = <span class="number">0x1d7</span>,</div><div class="line">    OP_UNUSED_D8FF                  = <span class="number">0x1d8</span>,</div><div class="line">    OP_UNUSED_D9FF                  = <span class="number">0x1d9</span>,</div><div class="line">    OP_UNUSED_DAFF                  = <span class="number">0x1da</span>,</div><div class="line">    OP_UNUSED_DBFF                  = <span class="number">0x1db</span>,</div><div class="line">    OP_UNUSED_DCFF                  = <span class="number">0x1dc</span>,</div><div class="line">    OP_UNUSED_DDFF                  = <span class="number">0x1dd</span>,</div><div class="line">    OP_UNUSED_DEFF                  = <span class="number">0x1de</span>,</div><div class="line">    OP_UNUSED_DFFF                  = <span class="number">0x1df</span>,</div><div class="line">    OP_UNUSED_E0FF                  = <span class="number">0x1e0</span>,</div><div class="line">    OP_UNUSED_E1FF                  = <span class="number">0x1e1</span>,</div><div class="line">    OP_UNUSED_E2FF                  = <span class="number">0x1e2</span>,</div><div class="line">    OP_UNUSED_E3FF                  = <span class="number">0x1e3</span>,</div><div class="line">    OP_UNUSED_E4FF                  = <span class="number">0x1e4</span>,</div><div class="line">    OP_UNUSED_E5FF                  = <span class="number">0x1e5</span>,</div><div class="line">    OP_UNUSED_E6FF                  = <span class="number">0x1e6</span>,</div><div class="line">    OP_UNUSED_E7FF                  = <span class="number">0x1e7</span>,</div><div class="line">    OP_UNUSED_E8FF                  = <span class="number">0x1e8</span>,</div><div class="line">    OP_UNUSED_E9FF                  = <span class="number">0x1e9</span>,</div><div class="line">    OP_UNUSED_EAFF                  = <span class="number">0x1ea</span>,</div><div class="line">    OP_UNUSED_EBFF                  = <span class="number">0x1eb</span>,</div><div class="line">    OP_UNUSED_ECFF                  = <span class="number">0x1ec</span>,</div><div class="line">    OP_UNUSED_EDFF                  = <span class="number">0x1ed</span>,</div><div class="line">    OP_UNUSED_EEFF                  = <span class="number">0x1ee</span>,</div><div class="line">    OP_UNUSED_EFFF                  = <span class="number">0x1ef</span>,</div><div class="line">    OP_UNUSED_F0FF                  = <span class="number">0x1f0</span>,</div><div class="line">    OP_UNUSED_F1FF                  = <span class="number">0x1f1</span>,</div><div class="line">    OP_INVOKE_OBJECT_INIT_JUMBO     = <span class="number">0x1f2</span>,</div><div class="line">    OP_IGET_VOLATILE_JUMBO          = <span class="number">0x1f3</span>,</div><div class="line">    OP_IGET_WIDE_VOLATILE_JUMBO     = <span class="number">0x1f4</span>,</div><div class="line">    OP_IGET_OBJECT_VOLATILE_JUMBO   = <span class="number">0x1f5</span>,</div><div class="line">    OP_IPUT_VOLATILE_JUMBO          = <span class="number">0x1f6</span>,</div><div class="line">    OP_IPUT_WIDE_VOLATILE_JUMBO     = <span class="number">0x1f7</span>,</div><div class="line">    OP_IPUT_OBJECT_VOLATILE_JUMBO   = <span class="number">0x1f8</span>,</div><div class="line">    OP_SGET_VOLATILE_JUMBO          = <span class="number">0x1f9</span>,</div><div class="line">    OP_SGET_WIDE_VOLATILE_JUMBO     = <span class="number">0x1fa</span>,</div><div class="line">    OP_SGET_OBJECT_VOLATILE_JUMBO   = <span class="number">0x1fb</span>,</div><div class="line">    OP_SPUT_VOLATILE_JUMBO          = <span class="number">0x1fc</span>,</div><div class="line">    OP_SPUT_WIDE_VOLATILE_JUMBO     = <span class="number">0x1fd</span>,</div><div class="line">    OP_SPUT_OBJECT_VOLATILE_JUMBO   = <span class="number">0x1fe</span>,</div><div class="line">    OP_THROW_VERIFICATION_ERROR_JUMBO = <span class="number">0x1ff</span>,</div><div class="line">    <span class="comment">// END(libdex-opcode-enum)</span></div><div class="line">&#125;Opcode;</div></pre></td></tr></table></figure>
+<h3 id="3-2-指令格式标识"><a href="#3-2-指令格式标识" class="headerlink" title="3.2 指令格式标识"></a>3.2 指令格式标识</h3><p>指令格式的约定如下:</p>
+<p>​     ● 指令格式标识大多由三个字符组成，前两个是数字，最后一个是字母<br>​     ● 第一个数字是表示指令有多少个16位的字组成<br>​     ● 第二个数字是表示指令最多使用寄存器的个数。特殊标记 “r” 标识使用一定范围内的寄存器。<br>​     ● 第三个字母为类型码，表示指令用到的额外数据的类型。取值见如下表。</p>
+<table>
+<thead>
+<tr>
+<th>助记符</th>
+<th>位大小</th>
+<th>说　明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>b</td>
+<td>8</td>
+<td>8位有符号立即数</td>
+</tr>
+<tr>
+<td>c</td>
+<td>16,32</td>
+<td>常量池索引</td>
+</tr>
+<tr>
+<td>f</td>
+<td>16</td>
+<td>接口常量（仅对静态链接格式有效）</td>
+</tr>
+<tr>
+<td>h</td>
+<td>16</td>
+<td>有符号立即数（32位或64位数的高值位，低值位为0）</td>
+</tr>
+<tr>
+<td>i</td>
+<td>32</td>
+<td>立即数，有符号整数或32位浮点数</td>
+</tr>
+<tr>
+<td>l</td>
+<td>64</td>
+<td>立即数，有符号整数或64位双精度浮点数</td>
+</tr>
+<tr>
+<td>m</td>
+<td>16</td>
+<td>方法常量（仅对静态链接格式有效）</td>
+</tr>
+<tr>
+<td>n</td>
+<td>4</td>
+<td>4位的立即数</td>
+</tr>
+<tr>
+<td>s</td>
+<td>16</td>
+<td>短整型立即数</td>
+</tr>
+<tr>
+<td>t</td>
+<td>8, 16, 32</td>
+<td>跳转，分支</td>
+</tr>
+<tr>
+<td>x</td>
+<td>0</td>
+<td>无额外数据</td>
+</tr>
+</tbody>
+</table>
+<p>注:</p>
+<ul>
+<li><p>每条指令操作码只能有一个固定的指令格式标识</p>
+</li>
+<li><p>但多条指令操作码可能具备相同的指令格式标识</p>
+</li>
+<li><p>参考下图, 每条指令操作码的指令格式标识已经预定义好</p>
+<p>​</p>
+<p>| Op &amp; Format | Mnemonic / Syntax           | Arguments                                |<br>| ———– | ————————— | —————————————- |<br>| 00 10x      | nop                         |                                          |<br>| 01 12x      | move vA, vB                 | <code>A:</code> destination register (4 bits)<code>B:</code> source register (4 bits) |<br>| 02 22x      | move/from16 vAA, vBBBB      | <code>A:</code> destination register (8 bits)<code>B:</code> source register (16 bits) |<br>| 03 32x      | move/16 vAAAA, vBBBB        | <code>A:</code> destination register (16 bits)<code>B:</code> source register (16 bits) |<br>| 04 12x      | move-wide vA, vB            | <code>A:</code> destination register pair (4 bits)<code>B:</code> source register pair (4 bits) |<br>| 05 22x      | move-wide/from16 vAA, vBBBB | <code>A:</code> destination register pair (8 bits)<code>B:</code> source register pair (16 bits) |<br>| 06 32x      | move-wide/16 vAAAA, vBBBB   | <code>A:</code> destination register pair (16 bits)<code>B:</code> source register pair (16 bits) |<br>| …         | …                         | …                                      |</p>
+</li>
+</ul>
+<p>完整表格请查询文档</p>
+<p>如: 01 操作码的指令标识是10x, 表示指令只有一个16位数、没有使用寄存器、无额外数据</p>
+<p>Android 4.0 docs 另外还有一个指令格式表, 请查阅文档</p>
+<h3 id="3-3-使用以上表进行指令阅读"><a href="#3-3-使用以上表进行指令阅读" class="headerlink" title="3.3 使用以上表进行指令阅读"></a>3.3 使用以上表进行指令阅读</h3><p>加入通过分析某Dex文件,我们成功找到某块代码的二进制指令码如下:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">62 00 00 00 1A 01 01 00  6E 20 02 00 10 00 0E 00</div></pre></td></tr></table></figure>
+<p>需要遵循的原则:</p>
+<ul>
+<li>指令以ushort (16 bit)为指令长度单位</li>
+<li>指令默认为小端格式</li>
+<li>op 都是位于首个 16bit 数据的低 8 bit </li>
+</ul>
+<p>以上二进制指令码我们可以翻译为16进制:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">0x 00 62</div><div class="line">0x 00 00</div><div class="line">0x 01 1A</div><div class="line">0x 00 01 </div><div class="line">0x 20 6E</div><div class="line">0x 00 02</div><div class="line">0x 00 10</div><div class="line">0x 00 0E</div></pre></td></tr></table></figure>
+<p>通过这个，我们还不能判断出有多少条完整的指令, 按照指令格式进行解读:</p>
+<ol>
+<li><p>利用原则【op 都是位于首个 16bit 数据的低 8 bit】我们找到第一条指令的OP为0x62</p>
+</li>
+<li><p>使用0x62在指令集表查到0x62的指令助记符为 sget-object，指令标识为21C, 且类型化操作为: s<em>staticop</em> vAA, field@BBBB</p>
+</li>
+<li><p>再利用查询到的指令标识(21C) 在指令格式表中查询到指令格式为:</p>
+<p>| Format        | ID   | Syntax                                   | Notable Opcodes Covered             |<br>| ————- | —- | —————————————- | ———————————– |<br>| AA|<em>op</em> BBBB | 21c  | <em>op</em> vAA, type@BBBB <em>op</em> vAA, field@BBBB <em>op</em> vAA, string@BBBB | check-cast const-class const-string |</p>
+<p>此指令格式包含3类语法操作</p>
+</li>
+<li><p>结合第二点类型化(field)判断对应的操作和语法应为: AA|op BBBB  / op vAA field@BBBB. </p>
+</li>
+<li><p>于是得到： 这条完整指令由两个16位指令组成的指令, 第一条指令的高8位含义为 vAA寄存器(值为0,即寄存器v0)，紧接着第二个16位BBBB(值为0x0000)表示field_ids 区里 Index = 0的东东. 指令含义为 - sget-object v0, field_ids[0]</p>
+</li>
+<li><p>再依次继续循环解析后续指令即可</p>
+</li>
+</ol>
+<h3 id="3-4-小结"><a href="#3-4-小结" class="headerlink" title="3.4 小结"></a>3.4 小结</h3><p>解析指令的思路: </p>
+<ol>
+<li>找到op</li>
+<li>依据op查[指令集]表找到对应的&lt;指令标识&gt;和&lt;指令助记符&gt;</li>
+<li>根据查到的op的&lt;指令标识&gt;在[指令格式表]查找指令op的完整指令格式</li>
+<li>根据指令助记符和完整的指令格式，解析出op对应的完整指令语义</li>
+<li>重复上述步骤</li>
+</ol>
+<h2 id="4-尾巴"><a href="#4-尾巴" class="headerlink" title="4. 尾巴"></a>4. 尾巴</h2><p>需要继续理解的问题:</p>
+<ol>
+<li>android 4.0 扩展的 JUMBO 指令, 超出了一字节的范畴，怎么解析的？</li>
+<li>寄存器的v命名法和p命名法, 反编译的时候怎样指定使用哪种命名法？</li>
+</ol>
+
+        
+        </div>
+        <footer class="article-footer">
+            <div class="share-container">
+
+
+
+</div>
+
+    <a data-url="http://yoursite.com/2017/10/19/02-Vm/[vm] - 理解Dalvik指令码执行原理/" data-id="cj9f7nm8q00088soa7vsw1l6a" class="article-share-link"><i class="fa fa-share"></i>Share</a>
+<script>
+    (function ($) {
+        // Prevent duplicate binding
+        if (typeof(__SHARE_BUTTON_BINDED__) === 'undefined' || !__SHARE_BUTTON_BINDED__) {
+            __SHARE_BUTTON_BINDED__ = true;
+        } else {
+            return;
+        }
+        $('body').on('click', function() {
+            $('.article-share-box.on').removeClass('on');
+        }).on('click', '.article-share-link', function(e) {
+            e.stopPropagation();
+
+            var $this = $(this),
+                url = $this.attr('data-url'),
+                encodedUrl = encodeURIComponent(url),
+                id = 'article-share-box-' + $this.attr('data-id'),
+                offset = $this.offset(),
+                box;
+
+            if ($('#' + id).length) {
+                box = $('#' + id);
+
+                if (box.hasClass('on')){
+                    box.removeClass('on');
+                    return;
+                }
+            } else {
+                var html = [
+                    '<div id="' + id + '" class="article-share-box">',
+                        '<input class="article-share-input" value="' + url + '">',
+                        '<div class="article-share-links">',
+                            '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="fa fa-twitter article-share-twitter" target="_blank" title="Twitter"></a>',
+                            '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="fa fa-facebook article-share-facebook" target="_blank" title="Facebook"></a>',
+                            '<a href="http://pinterest.com/pin/create/button/?url=' + encodedUrl + '" class="fa fa-pinterest article-share-pinterest" target="_blank" title="Pinterest"></a>',
+                            '<a href="https://plus.google.com/share?url=' + encodedUrl + '" class="fa fa-google article-share-google" target="_blank" title="Google+"></a>',
+                        '</div>',
+                    '</div>'
+                ].join('');
+
+              box = $(html);
+
+              $('body').append(box);
+            }
+
+            $('.article-share-box.on').hide();
+
+            box.css({
+                top: offset.top + 25,
+                left: offset.left
+            }).addClass('on');
+
+        }).on('click', '.article-share-box', function (e) {
+            e.stopPropagation();
+        }).on('click', '.article-share-box-input', function () {
+            $(this).select();
+        }).on('click', '.article-share-box-link', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            window.open(this.href, 'article-share-box-window-' + Date.now(), 'width=500,height=450');
+        });
+    })(jQuery);
+</script>
+
+            
+    
+
+        </footer>
+    </div>
+    
+        
+<nav id="article-nav">
+    
+        <a href="/2017/10/20/02-Vm/[vm] - JVM反编译/" id="article-nav-newer" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">Newer</strong>
+            <div class="article-nav-title">
+                
+                    JVM反编译
+                
+            </div>
+        </a>
+    
+    
+        <a href="/2017/09/30/09-Tools/[0] - Hexo+github搭建Blog/" id="article-nav-older" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">Older</strong>
+            <div class="article-nav-title">Hexo + Github搭建Blog</div>
+        </a>
+    
+</nav>
+
+
+    
+</article>
+
+
+    
+    
+
+</section>
+            
+                
+<aside id="sidebar">
+   
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">tag cloud</h3>
+        <div class="widget tagcloud">
+            <a href="/tags/Heap/" style="font-size: 10px;">Heap</a> <a href="/tags/Iot/" style="font-size: 10px;">Iot</a> <a href="/tags/Lora/" style="font-size: 10px;">Lora</a> <a href="/tags/NB-IOT/" style="font-size: 10px;">NB-IOT</a> <a href="/tags/STACK/" style="font-size: 10px;">STACK</a> <a href="/tags/STM32/" style="font-size: 15px;">STM32</a> <a href="/tags/Ymodem/" style="font-size: 10px;">Ymodem</a> <a href="/tags/dalvik/" style="font-size: 15px;">dalvik</a> <a href="/tags/github/" style="font-size: 10px;">github</a> <a href="/tags/hexo/" style="font-size: 10px;">hexo</a> <a href="/tags/iot/" style="font-size: 15px;">iot</a> <a href="/tags/jvm/" style="font-size: 15px;">jvm</a> <a href="/tags/lora/" style="font-size: 10px;">lora</a> <a href="/tags/nb-iot/" style="font-size: 10px;">nb-iot</a> <a href="/tags/smali/" style="font-size: 10px;">smali</a> <a href="/tags/timer/" style="font-size: 10px;">timer</a> <a href="/tags/ucosiii/" style="font-size: 10px;">ucosiii</a> <a href="/tags/vm/" style="font-size: 20px;">vm</a> <a href="/tags/wifi/" style="font-size: 10px;">wifi</a> <a href="/tags/zigbee/" style="font-size: 10px;">zigbee</a>
+        </div>
+    </div>
+
+    
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">categories</h3>
+        <div class="widget">
+            <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/IOT/">IOT</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/MCU/">MCU</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/TOOL/">TOOL</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/VM/">VM</a><span class="category-list-count">4</span></li></ul>
+        </div>
+    </div>
+
+    
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">archives</h3>
+        <div class="widget">
+            <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/10/">October 2017</a><span class="archive-list-count">5</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/09/">September 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/08/">August 2017</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/07/">July 2017</a><span class="archive-list-count">3</span></li></ul>
+        </div>
+    </div>
+
+    
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">recent</h3>
+        <div class="widget">
+            <ul id="recent-post" class="">
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/10/26/04-Mcu/[mcu] - UCOSIII-3.04.05定时器Bug/" class="thumbnail">
+    
+    
+        <span style="background-image:url(http://otfz8unl1.bkt.clouddn.com/markdown/171031/43LFEFGHeL.png)" alt="UCOSIII-v3.04.05 定时器Bug" class="thumbnail-image"></span>
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/MCU/">MCU</a></p>
+                            <p class="item-title"><a href="/2017/10/26/04-Mcu/[mcu] - UCOSIII-3.04.05定时器Bug/" class="title">UCOSIII-v3.04.05 定时器Bug</a></p>
+                            <p class="item-date"><time datetime="2017-10-26T10:00:00.000Z" itemprop="datePublished">2017-10-26</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/10/25/02-Vm/[vm] - VM学习工具和资料整理/" class="thumbnail">
+    
+    
+        <span style="background-image:url(http://otfz8unl1.bkt.clouddn.com/markdown/171031/DjHBD0j695.png)" alt="VM学习资料整理" class="thumbnail-image"></span>
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/VM/">VM</a></p>
+                            <p class="item-title"><a href="/2017/10/25/02-Vm/[vm] - VM学习工具和资料整理/" class="title">VM学习资料整理</a></p>
+                            <p class="item-date"><time datetime="2017-10-25T04:00:00.000Z" itemprop="datePublished">2017-10-25</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/10/20/02-Vm/[vm] - Dalvik反编译/" class="thumbnail">
+    
+    
+        <span style="background-image:url(http://otfz8unl1.bkt.clouddn.com/markdown/171031/CK92afFfl2.png)" alt="Dalvik反编译" class="thumbnail-image"></span>
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/VM/">VM</a></p>
+                            <p class="item-title"><a href="/2017/10/20/02-Vm/[vm] - Dalvik反编译/" class="title">Dalvik反编译</a></p>
+                            <p class="item-date"><time datetime="2017-10-20T04:02:00.000Z" itemprop="datePublished">2017-10-20</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/10/20/02-Vm/[vm] - JVM反编译/" class="thumbnail">
+    
+    
+        <span style="background-image:url(http://otfz8unl1.bkt.clouddn.com/markdown/171031/DjHBD0j695.png)" alt="JVM反编译" class="thumbnail-image"></span>
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/VM/">VM</a></p>
+                            <p class="item-title"><a href="/2017/10/20/02-Vm/[vm] - JVM反编译/" class="title">JVM反编译</a></p>
+                            <p class="item-date"><time datetime="2017-10-20T04:00:00.000Z" itemprop="datePublished">2017-10-20</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/10/19/02-Vm/[vm] - 理解Dalvik指令码执行原理/" class="thumbnail">
+    
+    
+        <span style="background-image:url(http://otfz8unl1.bkt.clouddn.com/markdown/171031/BmAKL24Fj9.png)" alt="理解Dalvik指令码执行原理" class="thumbnail-image"></span>
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/VM/">VM</a></p>
+                            <p class="item-title"><a href="/2017/10/19/02-Vm/[vm] - 理解Dalvik指令码执行原理/" class="title">理解Dalvik指令码执行原理</a></p>
+                            <p class="item-date"><time datetime="2017-10-19T04:00:00.000Z" itemprop="datePublished">2017-10-19</time></p>
+                        </div>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+
+    
+    <div id="toTop" class="fa fa-angle-up"></div>
+</aside>
+
+            
+        </div>
+        <footer id="footer">
+    <div class="outer">
+        <div id="footer-info" class="inner">
+            &copy; 2017 nix.long<br>
+            Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>. Theme by <a href="http://github.com/ppoffice">PPOffice</a>
+        </div>
+    </div>
+</footer>
+        
+
+
+    
+        <script src="/libs/lightgallery/js/lightgallery.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-thumbnail.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-pager.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-autoplay.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-fullscreen.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-zoom.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-hash.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-share.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-video.min.js"></script>
+    
+    
+        <script src="/libs/justified-gallery/jquery.justifiedGallery.min.js"></script>
+    
+    
+        <script type="text/x-mathjax-config">
+            MathJax.Hub.Config({ tex2jax: { inlineMath: [['$','$'], ['\\(','\\)']] } });
+        </script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+    
+
+
+
+<!-- Custom Scripts -->
+<script src="/js/main.js"></script>
+
+    </div>
+</body>
+</html>

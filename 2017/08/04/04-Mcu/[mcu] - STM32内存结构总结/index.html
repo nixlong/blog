@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+    <meta charset="utf-8">
+    
+    <title>STM32内存结构总结 | I&#39;m Long</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="#STM32内存结构总结 [TOC] ##0.STM32内存结构图  ##1.要点 ###1.1 两种存储类型: RAM 和 Flash  RAM可读可写，在STM32的内存结构上，RAM地址段分布[0x2000_0000, 0x2000_0000 + RAM size) Flash只读，在STM32的内存结构上，Flash地址段[0x0800_0000, 0x2000_0000)">
+<meta name="keywords" content="STM32,STACK,Heap">
+<meta property="og:type" content="article">
+<meta property="og:title" content="STM32内存结构总结">
+<meta property="og:url" content="http://yoursite.com/2017/08/04/04-Mcu/[mcu] - STM32内存结构总结/index.html">
+<meta property="og:site_name" content="I&#39;m Long">
+<meta property="og:description" content="#STM32内存结构总结 [TOC] ##0.STM32内存结构图  ##1.要点 ###1.1 两种存储类型: RAM 和 Flash  RAM可读可写，在STM32的内存结构上，RAM地址段分布[0x2000_0000, 0x2000_0000 + RAM size) Flash只读，在STM32的内存结构上，Flash地址段[0x0800_0000, 0x2000_0000)">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="http://otfz8unl1.bkt.clouddn.com/markdown/171030/2d8gmiAIJ6.png">
+<meta property="og:updated_time" content="2017-10-31T06:05:19.226Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="STM32内存结构总结">
+<meta name="twitter:description" content="#STM32内存结构总结 [TOC] ##0.STM32内存结构图  ##1.要点 ###1.1 两种存储类型: RAM 和 Flash  RAM可读可写，在STM32的内存结构上，RAM地址段分布[0x2000_0000, 0x2000_0000 + RAM size) Flash只读，在STM32的内存结构上，Flash地址段[0x0800_0000, 0x2000_0000)">
+<meta name="twitter:image" content="http://otfz8unl1.bkt.clouddn.com/markdown/171030/2d8gmiAIJ6.png">
+    
+
+    
+
+    
+
+    <link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/libs/open-sans/styles.css">
+    <link rel="stylesheet" href="/libs/source-code-pro/styles.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+
+    <script src="/libs/jquery/2.1.3/jquery.min.js"></script>
+    
+    
+        <link rel="stylesheet" href="/libs/lightgallery/css/lightgallery.min.css">
+    
+    
+        <link rel="stylesheet" href="/libs/justified-gallery/justifiedGallery.min.css">
+    
+    
+    
+    
+
+
+</head>
+
+<body>
+    <div id="container">
+        <header id="header">
+    <div id="header-main" class="header-inner">
+        <div class="outer">
+            <a href="/" id="logo">
+                
+                <span class="site-title">I&#39;m Long</span>
+            </a>
+            <nav id="main-nav">
+                
+                    <a class="main-nav-link" href="/">Home</a>
+                
+                    <a class="main-nav-link" href="/archives/">Archives</a>
+                
+                    <a class="main-nav-link" href="/categories/">Categories</a>
+                
+                    <a class="main-nav-link" href="/about">About</a>
+                
+            </nav>
+            
+                
+                <nav id="sub-nav">
+                    <div class="profile" id="profile-nav">
+                        <a id="profile-anchor" href="javascript:;">
+                            <img class="avatar" src="http://otfz8unl1.bkt.clouddn.com/markdown/170815/2LlFGLFh3C.png" />
+                            <i class="fa fa-caret-down"></i>
+                        </a>
+                    </div>
+                </nav>
+            
+            <div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="Search" />
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="Type something..." />
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: 'Posts',
+            PAGES: 'Pages',
+            CATEGORIES: 'Categories',
+            TAGS: 'Tags',
+            UNTITLED: '(Untitled)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+</div>
+        </div>
+    </div>
+    <div id="main-nav-mobile" class="header-sub header-inner">
+        <table class="menu outer">
+            <tr>
+                
+                    <td><a class="main-nav-link" href="/">Home</a></td>
+                
+                    <td><a class="main-nav-link" href="/archives/">Archives</a></td>
+                
+                    <td><a class="main-nav-link" href="/categories/">Categories</a></td>
+                
+                    <td><a class="main-nav-link" href="/about">About</a></td>
+                
+                <td>
+                    
+    <div class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="Search" />
+    </div>
+
+                </td>
+            </tr>
+        </table>
+    </div>
+</header>
+
+        <div class="outer">
+            
+                
+
+<aside id="profile">
+    <div class="inner profile-inner">
+        <div class="base-info profile-block">
+            <img id="avatar" src="http://otfz8unl1.bkt.clouddn.com/markdown/170815/2LlFGLFh3C.png" />
+            <h2 id="name">nix.long</h2>
+            <h3 id="title">The Coder</h3>
+            <span id="location"><i class="fa fa-map-marker"></i>ChengDu, China</span>
+            <a id="follow" target="_blank" href="https://github.com/nixlong/">FOLLOW</a>
+        </div>
+        <div class="article-info profile-block">
+            <div class="article-info-block">
+                11
+                <span>posts</span>
+            </div>
+            <div class="article-info-block">
+                20
+                <span>tags</span>
+            </div>
+        </div>
+        
+    </div>
+</aside>
+
+            
+            <section id="main"><article id="post-04-Mcu/[mcu] - STM32内存结构总结" class="article article-type-post" itemscope itemprop="blogPost">
+    <div class="article-inner">
+        
+            
+	
+		<img src="http://otfz8unl1.bkt.clouddn.com/markdown/171030/2d8gmiAIJ6.png" class="article-banner" />
+	
+
+
+
+        
+        
+            <header class="article-header">
+                
+    
+        <h1 class="article-title" itemprop="name">
+            STM32内存结构总结
+        </h1>
+    
+
+                
+                    <div class="article-meta">
+                        
+    <div class="article-date">
+        <i class="fa fa-calendar"></i>
+        <a href="/2017/08/04/04-Mcu/[mcu] - STM32内存结构总结/">
+            <time datetime="2017-08-04T04:00:00.000Z" itemprop="datePublished">2017-08-04</time>
+        </a>
+    </div>
+
+
+                        
+    <div class="article-category">
+    	<i class="fa fa-folder"></i>
+        <a class="article-category-link" href="/categories/MCU/">MCU</a>
+    </div>
+
+                        
+    <div class="article-tag">
+        <i class="fa fa-tag"></i>
+        <a class="tag-link" href="/tags/Heap/">Heap</a>, <a class="tag-link" href="/tags/STACK/">STACK</a>, <a class="tag-link" href="/tags/STM32/">STM32</a>
+    </div>
+
+                    </div>
+                
+            </header>
+        
+        
+        <div class="article-entry" itemprop="articleBody">
+        
+            
+                <div id="toc" class="toc-article">
+                <strong class="toc-title">Catalogue</strong>
+                    
+                </div>
+            
+            <p>#STM32内存结构总结</p>
+<p>[TOC]</p>
+<p>##0.STM32内存结构图</p>
+<p><img src="http://otfz8unl1.bkt.clouddn.com/markdown/170804/l8CA8Dh48J.png" alt="mark"></p>
+<p>##1.要点</p>
+<p>###1.1 两种存储类型: RAM 和 Flash</p>
+<ul>
+<li>RAM可读可写，在STM32的内存结构上，RAM地址段分布[0x2000_0000, 0x2000_0000 + RAM size)</li>
+<li>Flash只读，在STM32的内存结构上，Flash地址段[0x0800_0000, 0x2000_0000)</li>
+</ul>
+<a id="more"></a>
+<p>###1.2 六类存储数据段: .data/.bss/.text/.constdata/heap/stack</p>
+<ul>
+<li>.data数据段: 用来存放初始化了但不是初始化为0的全局变量(global)和静态变量（static）。它是可读可写的</li>
+<li>.bss(Block Started by Symbol)数据段: 用于存放没有初始化或初始化为0的全局变量和静态变量，可读可写，如果没有初始化, 系统会将变量初始化为0.</li>
+<li>.text代码段: 用来放程序代码（code）， 在代码编译完成后, 长久只读存放于此.</li>
+<li>.constdata只读常量数据段: const限定的数据类型存放与此，只读.</li>
+<li>heap堆区: 通常只我们说的动态内存分配,使用内存分配器(memory allocator)管理, malloc/free进行申请和释放</li>
+<li>stack栈区: 在代码执行时用来保存函数的局部变量和参数。其操作方式类似于数据结构中的栈，是一种“后进先出”（Last In First Out，LIFO）的数据结构。这意味着最后放到栈上的数据，将会是第一个从栈上移走的数据，对于哪些暂时存储的信息，和不需要长时间保存的信息来说，LIFO这种数据结构非常理想。在调用函数或过程后，系统通常会清除栈上保存的局部变量、函数调用信息及其它信息。栈的顶部通常在可读写的RAM区的最后，其地址空间通常“向下减少”，即当栈上保存的数据越多，栈的地址就越小。</li>
+</ul>
+<p><br></p>
+<p>###1.3 三种存储属性区: RO/RW/ZI</p>
+<ul>
+<li>RO (Read Only ): 只读区域, 需要长久保存，烧写到Rom/Flash段,上文数据段的.text段和.constdata段属于此属性区(有时.constdata 段也被叫做 RO-data段, 和这个广义的RO注意区分)</li>
+<li>RW (Read Write): 可读可写的初始化了的全局变量和静态变量段，上文中的.data段属于RW区</li>
+<li>ZI (Zero Init): 没有进行初始化或者初始化为0，系统上电时会主动把此区域数据进行0初始化，上文的.bss段就是. 另外, 可翻看Keil工具编译的map文件，Heap和Stack区也进行了Zero的属性标注, 因此， Heap和Stack也可认为是ZI区域</li>
+</ul>
+<p>RW区比较特别, 可读可写但又进行了初始化,因为RAM中的数据是掉电不可保存的，因此RW区的.data段数据也需要保存在Rom/Flash里面，上电时候再将此类数据复制到RAM区域读写使用。而ZI区域数据不需要掉电保存，直接上电时初始化为0即可使用，因此不需要保存在ROM中。这样，计算RAM/ROM占用空间的公式:</p>
+<blockquote>
+<p>ROM Size = .text + .constdata + .data (RO + RW)<br>RAM Size = .bss  + .data (ZI + RW)</p>
+</blockquote>
+<p>这里RAM size计算时未考虑Stack和Heap区, 实际size是大于此的， 因为这两个区域具备动态变化的复杂性，难于估计。</p>
+<p>定义一个全局数组变量举例:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">1. static unsigned char test[1024];  //全局、未初始化, ZI区,不影响ROM size</div><div class="line">2. static unsigned char test[1024] = &#123;0&#125;;  //全局、初始化为0, ZI区,不影响ROM size</div><div class="line">3. static unsigned char test[1024] = &#123;1&#125;;  //全局、初始化为非0, RW(.data)区,ROM Size 扩大</div></pre></td></tr></table></figure></p>
+<p>###1.4 扩展说说Heap<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">在STM32的启动代码startup_*.s文件中,一般这样定义了堆大小：</div><div class="line">Heap_Size      EQU     0x200;</div></pre></td></tr></table></figure></p>
+<p>在实际使用中, 这个区域可能比1.2节提到的简洁描述更为复杂。</p>
+<ol>
+<li>很多小项目没有使用内存分配器: 由于各种原因(RAM不足、程序简单、etc)，一些所必须的大块或固定内存直接使用数组的方式定义使用,绕开了内存分配器。那么这个时候, Heap_Size 的存在是没有意义的, Heap_Size 定义越大，越浪费空间，可以直接Heap_Size定义为0。这个时候, 本来该堆区提供的空间可能定义在了.bss段(全局/静态数组没有初始化)、或.data(全局/静态数据初始化为非0)、或Stack上(使用了局部数组变量, Tips: 但大的数组不建议定义在stack, 否则可能栈溢出)</li>
+<li>重新实现内存分配器：没有直接将内存分配器直接映射在堆区，而是先定义大的数组内存(可能在.bss或.data, 为避免在ROM存储, 最好在.bss)， 再将这块内存给内存分配器支配使用</li>
+<li>内存分配器直接使用Heap区: 这个时候就要计算好预留多少空间给Stack区, 留多了，Stack用不上浪费；留少了极可能造成Stack溢出而程序崩溃</li>
+<li>除了使用自带RAM外，同时使用外部扩展RAM: 这就需要内存分配器来管理好几块地址不连续的RAM空间了</li>
+</ol>
+<p><br></p>
+<p>##2.小结</p>
+<p><img src="http://otfz8unl1.bkt.clouddn.com/markdown/170804/A6ic19530K.png" alt="mark"></p>
+<hr>
+<blockquote>
+<p>Author - nix.long<br>Date -   2017.08.04</p>
+</blockquote>
+
+        
+        </div>
+        <footer class="article-footer">
+            <div class="share-container">
+
+
+
+</div>
+
+    <a data-url="http://yoursite.com/2017/08/04/04-Mcu/[mcu] - STM32内存结构总结/" data-id="cj9f7nm9e000h8soapd2ilvjf" class="article-share-link"><i class="fa fa-share"></i>Share</a>
+<script>
+    (function ($) {
+        // Prevent duplicate binding
+        if (typeof(__SHARE_BUTTON_BINDED__) === 'undefined' || !__SHARE_BUTTON_BINDED__) {
+            __SHARE_BUTTON_BINDED__ = true;
+        } else {
+            return;
+        }
+        $('body').on('click', function() {
+            $('.article-share-box.on').removeClass('on');
+        }).on('click', '.article-share-link', function(e) {
+            e.stopPropagation();
+
+            var $this = $(this),
+                url = $this.attr('data-url'),
+                encodedUrl = encodeURIComponent(url),
+                id = 'article-share-box-' + $this.attr('data-id'),
+                offset = $this.offset(),
+                box;
+
+            if ($('#' + id).length) {
+                box = $('#' + id);
+
+                if (box.hasClass('on')){
+                    box.removeClass('on');
+                    return;
+                }
+            } else {
+                var html = [
+                    '<div id="' + id + '" class="article-share-box">',
+                        '<input class="article-share-input" value="' + url + '">',
+                        '<div class="article-share-links">',
+                            '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="fa fa-twitter article-share-twitter" target="_blank" title="Twitter"></a>',
+                            '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="fa fa-facebook article-share-facebook" target="_blank" title="Facebook"></a>',
+                            '<a href="http://pinterest.com/pin/create/button/?url=' + encodedUrl + '" class="fa fa-pinterest article-share-pinterest" target="_blank" title="Pinterest"></a>',
+                            '<a href="https://plus.google.com/share?url=' + encodedUrl + '" class="fa fa-google article-share-google" target="_blank" title="Google+"></a>',
+                        '</div>',
+                    '</div>'
+                ].join('');
+
+              box = $(html);
+
+              $('body').append(box);
+            }
+
+            $('.article-share-box.on').hide();
+
+            box.css({
+                top: offset.top + 25,
+                left: offset.left
+            }).addClass('on');
+
+        }).on('click', '.article-share-box', function (e) {
+            e.stopPropagation();
+        }).on('click', '.article-share-box-input', function () {
+            $(this).select();
+        }).on('click', '.article-share-box-link', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            window.open(this.href, 'article-share-box-window-' + Date.now(), 'width=500,height=450');
+        });
+    })(jQuery);
+</script>
+
+            
+    
+
+        </footer>
+    </div>
+    
+        
+<nav id="article-nav">
+    
+        <a href="/2017/08/14/04-Mcu/[mcu] - Ymodem协议移植/" id="article-nav-newer" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">Newer</strong>
+            <div class="article-nav-title">
+                
+                    Ymodem协议移植
+                
+            </div>
+        </a>
+    
+    
+        <a href="/2017/07/26/03-Iot/[iot] - Iot网络层无线技术方案PK(2) - 华山论剑Round 1 - LPWAN的王者之争 - NB-IOT pk Lora/" id="article-nav-older" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">Older</strong>
+            <div class="article-nav-title">Iot网络层无线技术方案PK(2) - LPWAN的王者之争[NB-IOT pk Lora]</div>
+        </a>
+    
+</nav>
+
+
+    
+</article>
+
+
+    
+    
+
+</section>
+            
+                
+<aside id="sidebar">
+   
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">tag cloud</h3>
+        <div class="widget tagcloud">
+            <a href="/tags/Heap/" style="font-size: 10px;">Heap</a> <a href="/tags/Iot/" style="font-size: 10px;">Iot</a> <a href="/tags/Lora/" style="font-size: 10px;">Lora</a> <a href="/tags/NB-IOT/" style="font-size: 10px;">NB-IOT</a> <a href="/tags/STACK/" style="font-size: 10px;">STACK</a> <a href="/tags/STM32/" style="font-size: 15px;">STM32</a> <a href="/tags/Ymodem/" style="font-size: 10px;">Ymodem</a> <a href="/tags/dalvik/" style="font-size: 15px;">dalvik</a> <a href="/tags/github/" style="font-size: 10px;">github</a> <a href="/tags/hexo/" style="font-size: 10px;">hexo</a> <a href="/tags/iot/" style="font-size: 15px;">iot</a> <a href="/tags/jvm/" style="font-size: 15px;">jvm</a> <a href="/tags/lora/" style="font-size: 10px;">lora</a> <a href="/tags/nb-iot/" style="font-size: 10px;">nb-iot</a> <a href="/tags/smali/" style="font-size: 10px;">smali</a> <a href="/tags/timer/" style="font-size: 10px;">timer</a> <a href="/tags/ucosiii/" style="font-size: 10px;">ucosiii</a> <a href="/tags/vm/" style="font-size: 20px;">vm</a> <a href="/tags/wifi/" style="font-size: 10px;">wifi</a> <a href="/tags/zigbee/" style="font-size: 10px;">zigbee</a>
+        </div>
+    </div>
+
+    
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">categories</h3>
+        <div class="widget">
+            <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/IOT/">IOT</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/MCU/">MCU</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/TOOL/">TOOL</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/VM/">VM</a><span class="category-list-count">4</span></li></ul>
+        </div>
+    </div>
+
+    
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">archives</h3>
+        <div class="widget">
+            <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/10/">October 2017</a><span class="archive-list-count">5</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/09/">September 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/08/">August 2017</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/07/">July 2017</a><span class="archive-list-count">3</span></li></ul>
+        </div>
+    </div>
+
+    
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">recent</h3>
+        <div class="widget">
+            <ul id="recent-post" class="">
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/10/26/04-Mcu/[mcu] - UCOSIII-3.04.05定时器Bug/" class="thumbnail">
+    
+    
+        <span style="background-image:url(http://otfz8unl1.bkt.clouddn.com/markdown/171031/43LFEFGHeL.png)" alt="UCOSIII-v3.04.05 定时器Bug" class="thumbnail-image"></span>
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/MCU/">MCU</a></p>
+                            <p class="item-title"><a href="/2017/10/26/04-Mcu/[mcu] - UCOSIII-3.04.05定时器Bug/" class="title">UCOSIII-v3.04.05 定时器Bug</a></p>
+                            <p class="item-date"><time datetime="2017-10-26T10:00:00.000Z" itemprop="datePublished">2017-10-26</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/10/25/02-Vm/[vm] - VM学习工具和资料整理/" class="thumbnail">
+    
+    
+        <span style="background-image:url(http://otfz8unl1.bkt.clouddn.com/markdown/171031/DjHBD0j695.png)" alt="VM学习资料整理" class="thumbnail-image"></span>
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/VM/">VM</a></p>
+                            <p class="item-title"><a href="/2017/10/25/02-Vm/[vm] - VM学习工具和资料整理/" class="title">VM学习资料整理</a></p>
+                            <p class="item-date"><time datetime="2017-10-25T04:00:00.000Z" itemprop="datePublished">2017-10-25</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/10/20/02-Vm/[vm] - Dalvik反编译/" class="thumbnail">
+    
+    
+        <span style="background-image:url(http://otfz8unl1.bkt.clouddn.com/markdown/171031/CK92afFfl2.png)" alt="Dalvik反编译" class="thumbnail-image"></span>
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/VM/">VM</a></p>
+                            <p class="item-title"><a href="/2017/10/20/02-Vm/[vm] - Dalvik反编译/" class="title">Dalvik反编译</a></p>
+                            <p class="item-date"><time datetime="2017-10-20T04:02:00.000Z" itemprop="datePublished">2017-10-20</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/10/20/02-Vm/[vm] - JVM反编译/" class="thumbnail">
+    
+    
+        <span style="background-image:url(http://otfz8unl1.bkt.clouddn.com/markdown/171031/DjHBD0j695.png)" alt="JVM反编译" class="thumbnail-image"></span>
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/VM/">VM</a></p>
+                            <p class="item-title"><a href="/2017/10/20/02-Vm/[vm] - JVM反编译/" class="title">JVM反编译</a></p>
+                            <p class="item-date"><time datetime="2017-10-20T04:00:00.000Z" itemprop="datePublished">2017-10-20</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/10/19/02-Vm/[vm] - 理解Dalvik指令码执行原理/" class="thumbnail">
+    
+    
+        <span style="background-image:url(http://otfz8unl1.bkt.clouddn.com/markdown/171031/BmAKL24Fj9.png)" alt="理解Dalvik指令码执行原理" class="thumbnail-image"></span>
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/VM/">VM</a></p>
+                            <p class="item-title"><a href="/2017/10/19/02-Vm/[vm] - 理解Dalvik指令码执行原理/" class="title">理解Dalvik指令码执行原理</a></p>
+                            <p class="item-date"><time datetime="2017-10-19T04:00:00.000Z" itemprop="datePublished">2017-10-19</time></p>
+                        </div>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+
+    
+    <div id="toTop" class="fa fa-angle-up"></div>
+</aside>
+
+            
+        </div>
+        <footer id="footer">
+    <div class="outer">
+        <div id="footer-info" class="inner">
+            &copy; 2017 nix.long<br>
+            Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>. Theme by <a href="http://github.com/ppoffice">PPOffice</a>
+        </div>
+    </div>
+</footer>
+        
+
+
+    
+        <script src="/libs/lightgallery/js/lightgallery.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-thumbnail.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-pager.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-autoplay.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-fullscreen.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-zoom.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-hash.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-share.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-video.min.js"></script>
+    
+    
+        <script src="/libs/justified-gallery/jquery.justifiedGallery.min.js"></script>
+    
+    
+        <script type="text/x-mathjax-config">
+            MathJax.Hub.Config({ tex2jax: { inlineMath: [['$','$'], ['\\(','\\)']] } });
+        </script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+    
+
+
+
+<!-- Custom Scripts -->
+<script src="/js/main.js"></script>
+
+    </div>
+</body>
+</html>

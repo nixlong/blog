@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+    <meta charset="utf-8">
+    
+    <title>Ymodem协议移植 | I&#39;m Long</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="#Ymodem协议移植 [TOC]  STM32/Dvm项目移植FatFS时,使用W25Qxx Flash做文件系统,不能使用USB或其他外设接口直接进行文件拷贝, 因此移植Ymodem协议用于向Flash下载文件.   ##0.Ymodem介绍 Ymodem在嵌入式项目中,常用于文件下载和IAP在线编程.Ymodem协议是一种发送并等待的协议。即发送方发送一个数据包以后，都要等待接收方的确认，分">
+<meta name="keywords" content="STM32,Ymodem">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Ymodem协议移植">
+<meta property="og:url" content="http://yoursite.com/2017/08/14/04-Mcu/[mcu] - Ymodem协议移植/index.html">
+<meta property="og:site_name" content="I&#39;m Long">
+<meta property="og:description" content="#Ymodem协议移植 [TOC]  STM32/Dvm项目移植FatFS时,使用W25Qxx Flash做文件系统,不能使用USB或其他外设接口直接进行文件拷贝, 因此移植Ymodem协议用于向Flash下载文件.   ##0.Ymodem介绍 Ymodem在嵌入式项目中,常用于文件下载和IAP在线编程.Ymodem协议是一种发送并等待的协议。即发送方发送一个数据包以后，都要等待接收方的确认，分">
+<meta property="og:locale" content="en">
+<meta property="og:image" content="http://otfz8unl1.bkt.clouddn.com/markdown/171030/Fa42IE1md8.png">
+<meta property="og:updated_time" content="2017-10-31T06:05:35.628Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Ymodem协议移植">
+<meta name="twitter:description" content="#Ymodem协议移植 [TOC]  STM32/Dvm项目移植FatFS时,使用W25Qxx Flash做文件系统,不能使用USB或其他外设接口直接进行文件拷贝, 因此移植Ymodem协议用于向Flash下载文件.   ##0.Ymodem介绍 Ymodem在嵌入式项目中,常用于文件下载和IAP在线编程.Ymodem协议是一种发送并等待的协议。即发送方发送一个数据包以后，都要等待接收方的确认，分">
+<meta name="twitter:image" content="http://otfz8unl1.bkt.clouddn.com/markdown/171030/Fa42IE1md8.png">
+    
+
+    
+
+    
+
+    <link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/libs/open-sans/styles.css">
+    <link rel="stylesheet" href="/libs/source-code-pro/styles.css">
+
+    <link rel="stylesheet" href="/css/style.css">
+
+    <script src="/libs/jquery/2.1.3/jquery.min.js"></script>
+    
+    
+        <link rel="stylesheet" href="/libs/lightgallery/css/lightgallery.min.css">
+    
+    
+        <link rel="stylesheet" href="/libs/justified-gallery/justifiedGallery.min.css">
+    
+    
+    
+    
+
+
+</head>
+
+<body>
+    <div id="container">
+        <header id="header">
+    <div id="header-main" class="header-inner">
+        <div class="outer">
+            <a href="/" id="logo">
+                
+                <span class="site-title">I&#39;m Long</span>
+            </a>
+            <nav id="main-nav">
+                
+                    <a class="main-nav-link" href="/">Home</a>
+                
+                    <a class="main-nav-link" href="/archives/">Archives</a>
+                
+                    <a class="main-nav-link" href="/categories/">Categories</a>
+                
+                    <a class="main-nav-link" href="/about">About</a>
+                
+            </nav>
+            
+                
+                <nav id="sub-nav">
+                    <div class="profile" id="profile-nav">
+                        <a id="profile-anchor" href="javascript:;">
+                            <img class="avatar" src="http://otfz8unl1.bkt.clouddn.com/markdown/170815/2LlFGLFh3C.png" />
+                            <i class="fa fa-caret-down"></i>
+                        </a>
+                    </div>
+                </nav>
+            
+            <div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="Search" />
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="Type something..." />
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: 'Posts',
+            PAGES: 'Pages',
+            CATEGORIES: 'Categories',
+            TAGS: 'Tags',
+            UNTITLED: '(Untitled)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+</div>
+        </div>
+    </div>
+    <div id="main-nav-mobile" class="header-sub header-inner">
+        <table class="menu outer">
+            <tr>
+                
+                    <td><a class="main-nav-link" href="/">Home</a></td>
+                
+                    <td><a class="main-nav-link" href="/archives/">Archives</a></td>
+                
+                    <td><a class="main-nav-link" href="/categories/">Categories</a></td>
+                
+                    <td><a class="main-nav-link" href="/about">About</a></td>
+                
+                <td>
+                    
+    <div class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="Search" />
+    </div>
+
+                </td>
+            </tr>
+        </table>
+    </div>
+</header>
+
+        <div class="outer">
+            
+                
+
+<aside id="profile">
+    <div class="inner profile-inner">
+        <div class="base-info profile-block">
+            <img id="avatar" src="http://otfz8unl1.bkt.clouddn.com/markdown/170815/2LlFGLFh3C.png" />
+            <h2 id="name">nix.long</h2>
+            <h3 id="title">The Coder</h3>
+            <span id="location"><i class="fa fa-map-marker"></i>ChengDu, China</span>
+            <a id="follow" target="_blank" href="https://github.com/nixlong/">FOLLOW</a>
+        </div>
+        <div class="article-info profile-block">
+            <div class="article-info-block">
+                11
+                <span>posts</span>
+            </div>
+            <div class="article-info-block">
+                20
+                <span>tags</span>
+            </div>
+        </div>
+        
+    </div>
+</aside>
+
+            
+            <section id="main"><article id="post-04-Mcu/[mcu] - Ymodem协议移植" class="article article-type-post" itemscope itemprop="blogPost">
+    <div class="article-inner">
+        
+            
+	
+		<img src="http://otfz8unl1.bkt.clouddn.com/markdown/171030/Fa42IE1md8.png" class="article-banner" />
+	
+
+
+
+        
+        
+            <header class="article-header">
+                
+    
+        <h1 class="article-title" itemprop="name">
+            Ymodem协议移植
+        </h1>
+    
+
+                
+                    <div class="article-meta">
+                        
+    <div class="article-date">
+        <i class="fa fa-calendar"></i>
+        <a href="/2017/08/14/04-Mcu/[mcu] - Ymodem协议移植/">
+            <time datetime="2017-08-14T04:00:00.000Z" itemprop="datePublished">2017-08-14</time>
+        </a>
+    </div>
+
+
+                        
+    <div class="article-category">
+    	<i class="fa fa-folder"></i>
+        <a class="article-category-link" href="/categories/MCU/">MCU</a>
+    </div>
+
+                        
+    <div class="article-tag">
+        <i class="fa fa-tag"></i>
+        <a class="tag-link" href="/tags/STM32/">STM32</a>, <a class="tag-link" href="/tags/Ymodem/">Ymodem</a>
+    </div>
+
+                    </div>
+                
+            </header>
+        
+        
+        <div class="article-entry" itemprop="articleBody">
+        
+            
+                <div id="toc" class="toc-article">
+                <strong class="toc-title">Catalogue</strong>
+                    <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-0-帧格式"><span class="toc-number">1.</span> <span class="toc-text">1.0 帧格式</span></a></li></ol>
+                </div>
+            
+            <p>#Ymodem协议移植</p>
+<p>[TOC]</p>
+<blockquote>
+<p>STM32/Dvm项目移植FatFS时,使用W25Qxx Flash做文件系统,不能使用USB或其他外设接口直接进行文件拷贝, 因此移植Ymodem协议用于向Flash下载文件. </p>
+</blockquote>
+<p>##0.Ymodem介绍</p>
+<p>Ymodem在嵌入式项目中,常用于文件下载和IAP在线编程.<br>Ymodem协议是一种发送并等待的协议。即发送方发送一个数据包以后，都要等待接收方的确认，分为Ymodem-1K和Ymodem-G两种子格式.<br><a id="more"></a></p>
+<ul>
+<li>YModem-1K用1024字节信息块传输取代标准的128字节传输，数据的发送回使用CRC校验，保证数据传输的正确性。它每传输一个信息块数据时，就会等待接收端回应ACK信号，接收到回应后，才会继续传输下一个信息块，保证数据已经全部接收。</li>
+<li>YModem-g传输形式与YModem-1K差不多，但是它去掉了数据的CRC校验码，同时在发送完一个数据块信息后，它不会等待接收端的ACK信号，而直接传输下一个数据块。正是它没有涉及错误校验，才使得它的传输速度比YModem-1K来得块。</li>
+</ul>
+<p>一般情况使用YModem-1K传输，而平时所说的YModem也是指的是YModem-1k.</p>
+<p><br></p>
+<p>##1. Ymodem的协议格式</p>
+<blockquote>
+<p>传输信号定义:<br><img src="http://otfz8unl1.bkt.clouddn.com/markdown/170814/e34H5H7L5i.png" alt="mark"></p>
+</blockquote>
+<h3 id="1-0-帧格式"><a href="#1-0-帧格式" class="headerlink" title="1.0 帧格式"></a>1.0 帧格式</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">START CC ~CC Data[128]:[1024] CRCH CRCL</div></pre></td></tr></table></figure>
+<p>一个Ymodem数据帧由帧头(START CC ~CC)、数据体和帧尾三部分构成:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">1) START : 如果是SOH，表示这帧数据体长度为128 Bytes; 为STX, 标识这帧数据体长度为1024 Bytes.(总长恒为128+5 或者1024+5)</div><div class="line">2) CC : 表示帧序号, 从0开始增加,超过255后，又从0开始计数</div><div class="line">3) ~CC为: CC的反码. 一起进行帧序的有效性判断</div><div class="line">4) CRCH/CRCL分别为CRC16校验的高低字节, 校验多项式定义为: CRC16-CCITT/x16+x12+x5+1. CRC只针对数据体计算,不包含帧头</div></pre></td></tr></table></figure></p>
+<p><br></p>
+<p>###1.1 传输起始帧</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">SOH  00 FF  filename 00 filezise 00  NUL[00] CRCH CRCL</div></pre></td></tr></table></figure>
+<blockquote>
+<ol>
+<li>传输起始帧以SOH信号开始,数据体长度128</li>
+<li>序号为0,数据体已filename开始,为ascii码格式字符串,然后紧跟00表示文件名结束;之后紧跟filesize,将每位转换为16进制的ascii码,后续到数据体结尾完全补00。如文件名123.c 长度 1024字节(0x400), 那么在数据体的格式为: 31 32 33 2E 63 00 34 30 30 00 … 后续用00 补充</li>
+<li>filename和filesize构成最长不超过128字节</li>
+</ol>
+</blockquote>
+<p><br></p>
+<p>###1.2 数据帧</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">SIG  CC ~CC Data[128]:[1024] &lt;1A...&gt; CRCH CRCL</div></pre></td></tr></table></figure>
+<p>在实际传输中, 数据帧根据文件大小不同分多种情况处理。假设文件大小为X.M=X/1024,N=X%1024.因为Ymodem-1K只有128和1024两种数据帧大小:</p>
+<blockquote>
+<ol>
+<li>如果M大于0:那么这M帧按照每帧1024字节传输,SIG为信号STX</li>
+<li>如果N大于128小于1024:SIG为STX,这帧按照1024字节传输,不足1024字节部分使用 1A 补全</li>
+<li>如果N小于等于128:SIG为SOH，这帧按照128字节传输，不足128字节使用1A补全</li>
+</ol>
+</blockquote>
+<p><br></p>
+<p>###1.3 结束帧</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">SOH  00 FF  128x[00] CRCH CRCL</div></pre></td></tr></table></figure>
+<p>结束帧类似起始帧，序号为00, 但数据体为空(全0x00).</p>
+<p><br></p>
+<p>###1.4 要点</p>
+<blockquote>
+<ol>
+<li>帧长恒为133(SOH开始)或1029(STX开始)之一</li>
+<li>起始/结束帧序号一定为0x00(反码0xff)</li>
+<li>数据帧序号从1开始计数, 但超过255后,会从0开始重新计数</li>
+<li>发送方实际发送的数据size是大于等于实际文件大小的, 接收方善用filesize和1A进行实际size接收</li>
+</ol>
+</blockquote>
+<p><br></p>
+<p>##2. Ymodem的传输过程</p>
+<p><img src="http://otfz8unl1.bkt.clouddn.com/markdown/170814/2kD9FHbB51.png" alt="mark"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">1. 接收方发送信号C启动传输会话,然后进入等待（SOH）状态，如果没有回应，就会超时退出</div><div class="line">2. 发送方开始时处于等待C过程中。收到C以后，发送携带文件名和文件长度的起始帧（SOH）数据包开始信号。进入等待（ACK）状态</div><div class="line">3. 接收方收到SOH起始帧以后，CRC校验满足，则发送ACK。发送方接收到ACK，又进入等待“文件传输开启”信号，即重新进入等待“C”的状态</div><div class="line">4. 接收方发送C,表示可以开始数据的传输</div><div class="line">5. 于是发送方发送数据帧、接收方接收到后回复ACK，如此循环进行数据接收(过程中双方因为任何异常,如人工终端、通讯故障等都可能造成传输中断).</div><div class="line">6. 文件传输完毕后，发送方发送EOT信号，接收方收到后，回应NAK</div><div class="line">7. 发送方再次发送EOT，接收方回应ACK。</div><div class="line">8. 接收方发送C，准备再次文件传输</div><div class="line">9. 如果是单次文件传输，发送方发送传输结束帧，接收方回应ACK后，整个传输会话结束</div></pre></td></tr></table></figure>
+<p><br></p>
+<p>##3. Ymodem向STM32的移植</p>
+<p>这里没有根据Ymodem协议进行全新实现，而是选用了ST官方 STM32F0xx_IAP demo的一个Ymodem实现进行修改移植. 它原本用于IAP的, 这里修改为即可适用普通文件传输也可以用于IAP.</p>
+<p>3.1. <a href="http://www.st.com/content/ccc/resource/legal/legal_agreement/license_agreement/de/fc/f7/32/a0/8b/4f/db/ultimate-liberty-v2.txt/files/ultimate-liberty-v2.txt/jcr:content/translations/en.ultimate-liberty-v2.txt" target="_blank" rel="external">原ST代码下载</a>  原代码在对filesize处理时存在bug，将最后一帧多余的1A也认作文件内容了<br>3.2. 重构代码为两部分：ANSI-C部分和Porting移植层，ANSI-C部分可以方便移植到各个平台，而只需要重新实现Porting层的接口即可<br>3.3 重构后的目录结构:<br><img src="http://otfz8unl1.bkt.clouddn.com/markdown/170814/6JBCfKBlj6.png" alt="mark"><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">src: 为ANSI-C部分, 方便向各平台移植</div><div class="line">inc: porting头文件，包含需要移植实现的接口函数</div></pre></td></tr></table></figure></p>
+<p>3.4 接口函数<br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"><span class="comment">/*********************************************************</span></div><div class="line"><span class="comment"> *  The  Porting APIs Should Be Implemented              </span></div><div class="line"><span class="comment"> ********************************************************/</span></div><div class="line"><span class="function"><span class="keyword">extern</span> <span class="keyword">unsigned</span> <span class="keyword">int</span>     <span class="title">SerialKeyPressed</span><span class="params">(<span class="keyword">unsigned</span> <span class="keyword">char</span> *key)</span></span>;</div><div class="line"><span class="function"><span class="keyword">extern</span> <span class="keyword">void</span>             <span class="title">SerialPutChar</span><span class="params">(<span class="keyword">unsigned</span> <span class="keyword">char</span> c)</span></span>;</div><div class="line"><span class="function"><span class="keyword">extern</span> <span class="keyword">unsigned</span> <span class="keyword">char</span>    <span class="title">SerialReadByte</span><span class="params">(<span class="keyword">void</span>)</span></span>;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">extern</span> <span class="keyword">void</span>             <span class="title">ymodem_init</span><span class="params">(<span class="keyword">void</span>)</span></span>;</div><div class="line"><span class="function"><span class="keyword">extern</span> <span class="keyword">unsigned</span> <span class="keyword">int</span>     <span class="title">ymodem_get_receive_maxsize</span><span class="params">(<span class="keyword">void</span>)</span></span>;</div><div class="line"><span class="function"><span class="keyword">extern</span> <span class="keyword">unsigned</span> <span class="keyword">int</span>     <span class="title">ymodem_get_transmit_size</span><span class="params">(<span class="keyword">void</span>)</span></span>;</div><div class="line"></div><div class="line"><span class="comment">//0 - success ; -1 - fail</span></div><div class="line"><span class="function"><span class="keyword">extern</span> <span class="keyword">int</span>              <span class="title">ymodem_recv_start_cb</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> * filename, <span class="keyword">const</span> <span class="keyword">unsigned</span> <span class="keyword">int</span> filesize)</span></span>;</div><div class="line"><span class="function"><span class="keyword">extern</span> <span class="keyword">int</span>              <span class="title">ymodem_recv_processing_cb</span><span class="params">(<span class="keyword">const</span> <span class="keyword">unsigned</span> <span class="keyword">char</span> * buffer, <span class="keyword">const</span> <span class="keyword">unsigned</span> <span class="keyword">int</span> buff_size)</span></span>;</div><div class="line"><span class="function"><span class="keyword">extern</span> <span class="keyword">int</span>              <span class="title">ymodem_recv_end_cb</span><span class="params">(<span class="keyword">void</span>)</span></span>;</div></pre></td></tr></table></figure></p>
+<p>3.5 在项目的接口实现<br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div><div class="line">112</div><div class="line">113</div><div class="line">114</div><div class="line">115</div><div class="line">116</div><div class="line">117</div><div class="line">118</div><div class="line">119</div><div class="line">120</div><div class="line">121</div><div class="line">122</div><div class="line">123</div><div class="line">124</div><div class="line">125</div><div class="line">126</div><div class="line">127</div><div class="line">128</div><div class="line">129</div><div class="line">130</div><div class="line">131</div><div class="line">132</div><div class="line">133</div><div class="line">134</div><div class="line">135</div><div class="line">136</div><div class="line">137</div><div class="line">138</div><div class="line">139</div><div class="line">140</div><div class="line">141</div><div class="line">142</div><div class="line">143</div><div class="line">144</div><div class="line">145</div><div class="line">146</div><div class="line">147</div><div class="line">148</div><div class="line">149</div><div class="line">150</div><div class="line">151</div><div class="line">152</div><div class="line">153</div><div class="line">154</div><div class="line">155</div><div class="line">156</div><div class="line">157</div><div class="line">158</div><div class="line">159</div><div class="line">160</div><div class="line">161</div><div class="line">162</div><div class="line">163</div><div class="line">164</div><div class="line">165</div><div class="line">166</div><div class="line">167</div><div class="line">168</div><div class="line">169</div><div class="line">170</div><div class="line">171</div><div class="line">172</div><div class="line">173</div><div class="line">174</div><div class="line">175</div><div class="line">176</div><div class="line">177</div><div class="line">178</div><div class="line">179</div><div class="line">180</div><div class="line">181</div><div class="line">182</div><div class="line">183</div><div class="line">184</div><div class="line">185</div><div class="line">186</div><div class="line">187</div><div class="line">188</div><div class="line">189</div><div class="line">190</div><div class="line">191</div><div class="line">192</div><div class="line">193</div><div class="line">194</div><div class="line">195</div><div class="line">196</div><div class="line">197</div><div class="line">198</div><div class="line">199</div><div class="line">200</div><div class="line">201</div><div class="line">202</div><div class="line">203</div><div class="line">204</div><div class="line">205</div><div class="line">206</div><div class="line">207</div><div class="line">208</div><div class="line">209</div><div class="line">210</div><div class="line">211</div><div class="line">212</div><div class="line">213</div><div class="line">214</div><div class="line">215</div><div class="line">216</div><div class="line">217</div><div class="line">218</div><div class="line">219</div><div class="line">220</div><div class="line">221</div><div class="line">222</div><div class="line">223</div><div class="line">224</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/* Private typedef -----------------------------------------------------------*/</span></div><div class="line"><span class="comment">/* Private define ------------------------------------------------------------*/</span></div><div class="line"><span class="comment">/* Private macro -------------------------------------------------------------*/</span></div><div class="line"><span class="comment">/* Private variables ---------------------------------------------------------*/</span></div><div class="line"><span class="comment">/* Private function prototypes -----------------------------------------------*/</span></div><div class="line"><span class="comment">/* Private functions ---------------------------------------------------------*/</span></div><div class="line"></div><div class="line"><span class="comment">/********************************************************************************</span></div><div class="line"><span class="comment"> *                     Porting APIs</span></div><div class="line"><span class="comment"> ********************************************************************************/</span></div><div class="line"><span class="keyword">typedef</span> <span class="keyword">enum</span>&#123;</div><div class="line">    TRANS_FILE  = <span class="number">0</span>,</div><div class="line">    IAP_IMAGE   = <span class="number">1</span>,</div><div class="line">&#125;YMODEM_ACTION_E;</div><div class="line"></div><div class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span>&#123;</span></div><div class="line">    COMM_TYPE_E         ymodem_uart;</div><div class="line">    YMODEM_ACTION_E     ymodem_action;</div><div class="line">    <span class="keyword">uint32_t</span>            ymodem_receive_supported_maxsize;</div><div class="line">    <span class="keyword">uint32_t</span>            ymodem_transmit_size;</div><div class="line">    </div><div class="line">    <span class="keyword">bool_t</span>              ymodem_file_inited;</div><div class="line">    <span class="keyword">uint32_t</span>            ymodem_file_total_size;</div><div class="line">    <span class="keyword">uint32_t</span>            ymodem_file_handled_size;</div><div class="line">    FIL                 ymodem_file_handle;</div><div class="line">    <span class="keyword">uint8_t</span>             ymodem_file_tmppath[FF_MAX_LFN];</div><div class="line">&#125;YMODEM_DATA_T;</div><div class="line"></div><div class="line">STATIC YMODEM_DATA_T s_ymodem_data;</div><div class="line"></div><div class="line"></div><div class="line"><span class="function">PUBLIC <span class="keyword">void</span> <span class="title">ymodem_init</span><span class="params">(<span class="keyword">void</span>)</span></span>&#123;</div><div class="line">    <span class="built_in">memset</span>(&amp;s_ymodem_data, <span class="number">0</span>, <span class="keyword">sizeof</span>(YMODEM_DATA_T));</div><div class="line">    </div><div class="line">    s_ymodem_data.ymodem_uart = COM1;</div><div class="line">    comm_enable_rxit(s_ymodem_data.ymodem_uart);</div><div class="line">    </div><div class="line">    s_ymodem_data.ymodem_action = TRANS_FILE;</div><div class="line">    </div><div class="line">    <span class="keyword">switch</span>(s_ymodem_data.ymodem_action)&#123;</div><div class="line">        <span class="keyword">case</span> TRANS_FILE:</div><div class="line">            s_ymodem_data.ymodem_receive_supported_maxsize = <span class="number">1024</span> * <span class="number">1024</span> *<span class="number">5</span>;</div><div class="line">            s_ymodem_data.ymodem_transmit_size = <span class="number">0</span>;</div><div class="line">            <span class="keyword">break</span>;</div><div class="line">        </div><div class="line">        <span class="keyword">case</span> IAP_IMAGE:</div><div class="line">            <span class="meta">#<span class="meta-keyword">warning</span> <span class="meta-string">"MUST implement GOT transmit SIZE!"</span>   </span></div><div class="line">            s_ymodem_data.ymodem_receive_supported_maxsize = <span class="number">1024</span> * <span class="number">1024</span> *<span class="number">5</span>;</div><div class="line">            s_ymodem_data.ymodem_transmit_size = <span class="number">0</span>;</div><div class="line">            <span class="keyword">break</span>;</div><div class="line">        </div><div class="line">        <span class="keyword">default</span>:</div><div class="line">            <span class="comment">//Not supported</span></div><div class="line">            <span class="keyword">break</span>;</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"><span class="function">PUBLIC uint32_t <span class="title">ymodem_get_receive_maxsize</span><span class="params">(<span class="keyword">void</span>)</span></span>&#123;</div><div class="line">    <span class="keyword">return</span> s_ymodem_data.ymodem_receive_supported_maxsize;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function">PUBLIC uint32_t <span class="title">ymodem_get_transmit_size</span><span class="params">(<span class="keyword">void</span>)</span></span>&#123;</div><div class="line">    <span class="keyword">return</span> s_ymodem_data.ymodem_transmit_size;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">//0 - success ; -1 - fail</span></div><div class="line"><span class="function">PUBLIC <span class="keyword">int</span> <span class="title">ymodem_recv_start_cb</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> * filename, <span class="keyword">const</span> <span class="keyword">uint32_t</span> filesize)</span></span>&#123;</div><div class="line">    FRESULT fres;</div><div class="line">    <span class="keyword">const</span> <span class="keyword">char</span> * prefix = (<span class="keyword">const</span> <span class="keyword">char</span>*)<span class="string">"1:/"</span>;</div><div class="line">    <span class="keyword">char</span> *filepath = (<span class="keyword">char</span>*)&amp;s_ymodem_data.ymodem_file_tmppath[<span class="number">0</span>];</div><div class="line">    <span class="keyword">uint32_t</span> filepath_size = <span class="keyword">sizeof</span>(s_ymodem_data.ymodem_file_tmppath);</div><div class="line">    </div><div class="line">    <span class="keyword">switch</span>(s_ymodem_data.ymodem_action)&#123;</div><div class="line">        <span class="keyword">case</span> TRANS_FILE:</div><div class="line">            <span class="keyword">if</span>(<span class="built_in">strlen</span>(prefix) + <span class="built_in">strlen</span>((<span class="keyword">char</span>*)filename) &gt;= filepath_size)&#123;</div><div class="line">                <span class="keyword">return</span> <span class="number">-1</span>;      <span class="comment">//path length too long</span></div><div class="line">            &#125;</div><div class="line">            <span class="built_in">memset</span>(&amp;s_ymodem_data.ymodem_file_tmppath[<span class="number">0</span>], <span class="number">0</span>, filepath_size);</div><div class="line">            filepath = <span class="built_in">strcat</span>((<span class="keyword">char</span>*)filepath, prefix);</div><div class="line">            filepath = <span class="built_in">strcat</span>((<span class="keyword">char</span>*)filepath, (<span class="keyword">char</span>*)filename);</div><div class="line">            </div><div class="line">            <span class="keyword">if</span>(FR_OK != (fres = f_open (&amp;s_ymodem_data.ymodem_file_handle, filepath, FA_WRITE | FA_CREATE_ALWAYS)))&#123;</div><div class="line">                logd(<span class="string">"Ymodem Start: create file(%s) fail(%d)...\n"</span>, filepath, fres);</div><div class="line">                <span class="keyword">return</span> <span class="number">-1</span>;</div><div class="line">            &#125; <span class="keyword">else</span> &#123;</div><div class="line">                logd(<span class="string">"Ymodem Start: create file(%s) ok(%d)...\n"</span>, filepath, fres);</div><div class="line">                </div><div class="line">                s_ymodem_data.ymodem_file_inited = TRUE;</div><div class="line">                s_ymodem_data.ymodem_file_total_size = filesize;</div><div class="line">                s_ymodem_data.ymodem_file_handled_size = <span class="number">0</span>;</div><div class="line">                <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">            &#125;</div><div class="line">            <span class="comment">//break;</span></div><div class="line">        </div><div class="line">        <span class="keyword">case</span> IAP_IMAGE:</div><div class="line">            <span class="comment">/* erase user application area */</span></div><div class="line">            <span class="comment">//FLASH_If_Erase(APPLICATION_ADDRESS);</span></div><div class="line">            </div><div class="line">            <span class="keyword">break</span>;</div><div class="line">        </div><div class="line">        <span class="keyword">default</span>:</div><div class="line">            <span class="comment">//Not supported</span></div><div class="line">            <span class="keyword">break</span>;</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">return</span> <span class="number">-1</span>;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function">PUBLIC <span class="keyword">int</span> <span class="title">ymodem_recv_processing_cb</span><span class="params">(<span class="keyword">const</span> <span class="keyword">uint8_t</span> * buffer, <span class="keyword">const</span> <span class="keyword">uint32_t</span> buff_size)</span></span>&#123;</div><div class="line">    FRESULT fres;</div><div class="line">    <span class="keyword">uint32_t</span> to_write_size = <span class="number">0</span>;</div><div class="line">    <span class="keyword">uint32_t</span> writted_size = <span class="number">0</span>;</div><div class="line">    <span class="keyword">uint32_t</span> order = <span class="number">0</span>;</div><div class="line">    </div><div class="line">    <span class="keyword">switch</span>(s_ymodem_data.ymodem_action)&#123;</div><div class="line">        <span class="keyword">case</span> TRANS_FILE:</div><div class="line">            to_write_size = s_ymodem_data.ymodem_file_total_size - s_ymodem_data.ymodem_file_handled_size;</div><div class="line">            to_write_size = (buff_size &gt; to_write_size) ? to_write_size : buff_size;</div><div class="line">            </div><div class="line">            order = (<span class="keyword">uint32_t</span>)buffer - <span class="number">2</span>;</div><div class="line">            <span class="keyword">if</span>(FR_OK != (fres = f_write(&amp;s_ymodem_data.ymodem_file_handle, buffer, to_write_size, &amp;writted_size)))&#123;</div><div class="line">                logw(<span class="string">"Ymodem process(%d): write file(%d - %d) fail(%d)...\n"</span>, *((<span class="keyword">uint8_t</span>*)order), to_write_size, writted_size, fres);</div><div class="line">                <span class="keyword">return</span> <span class="number">-1</span>;</div><div class="line">            &#125; <span class="keyword">else</span> &#123;</div><div class="line">                s_ymodem_data.ymodem_file_handled_size += to_write_size;</div><div class="line">                logi(<span class="string">"Ymodem process(%d): write file(%d/%d) ok(%d)...\n"</span>, *((<span class="keyword">uint8_t</span>*)order), s_ymodem_data.ymodem_file_handled_size, </div><div class="line">                            s_ymodem_data.ymodem_file_total_size, fres);</div><div class="line">                <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">            &#125;</div><div class="line">            <span class="comment">//break;</span></div><div class="line">        </div><div class="line">        <span class="keyword">case</span> IAP_IMAGE:</div><div class="line">            <span class="comment">//if (FLASH_If_Write(&amp;flashdestination, (uint32_t*) ramsource, (uint16_t) packet_length/4)  == 0)</span></div><div class="line">            <span class="keyword">break</span>;</div><div class="line">        </div><div class="line">        <span class="keyword">default</span>:</div><div class="line">            <span class="comment">//Not supported</span></div><div class="line">            <span class="keyword">break</span>;</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">return</span> <span class="number">-1</span>;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function">PUBLIC <span class="keyword">int</span> <span class="title">ymodem_recv_end_cb</span><span class="params">(<span class="keyword">void</span>)</span></span>&#123;</div><div class="line">    FRESULT fres;</div><div class="line">    FILINFO fno;</div><div class="line"></div><div class="line">    <span class="keyword">switch</span>(s_ymodem_data.ymodem_action)&#123;</div><div class="line">        <span class="keyword">case</span> TRANS_FILE:</div><div class="line">            <span class="keyword">if</span>(TRUE != s_ymodem_data.ymodem_file_inited)</div><div class="line">                <span class="keyword">return</span> <span class="number">-1</span>;</div><div class="line">            </div><div class="line">            fres = f_close(&amp;s_ymodem_data.ymodem_file_handle);</div><div class="line">            logd(<span class="string">"Ymodem End: close file res(%d)...\n"</span>, fres);</div><div class="line">            </div><div class="line">            fres = f_stat((<span class="keyword">const</span> TCHAR *)s_ymodem_data.ymodem_file_tmppath, &amp;fno);</div><div class="line">            <span class="keyword">if</span>(fres != RES_OK)&#123;</div><div class="line">                logw(<span class="string">"Get File Status Fail(%d)...\n"</span>, fres);</div><div class="line">            &#125; <span class="keyword">else</span> &#123;</div><div class="line">                logi(<span class="string">"Get File Status ok(%d), file size(%d) Bytes...\n"</span>, fres, fno.fsize);</div><div class="line">            &#125;</div><div class="line">            </div><div class="line">            <span class="built_in">memset</span>(&amp;s_ymodem_data.ymodem_file_handle, <span class="number">0</span>, <span class="keyword">sizeof</span>(FIL));</div><div class="line">            <span class="built_in">memset</span>(&amp;s_ymodem_data.ymodem_file_tmppath[<span class="number">0</span>], <span class="number">0</span>, <span class="keyword">sizeof</span>(s_ymodem_data.ymodem_file_tmppath));               </div><div class="line">            s_ymodem_data.ymodem_file_total_size = <span class="number">0</span>;</div><div class="line">            s_ymodem_data.ymodem_file_handled_size = <span class="number">0</span>;</div><div class="line">            s_ymodem_data.ymodem_file_inited = FALSE;</div><div class="line">            <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">            <span class="comment">//break;</span></div><div class="line">        </div><div class="line">        <span class="keyword">case</span> IAP_IMAGE:</div><div class="line">            <span class="comment">/* erase user application area */</span></div><div class="line">            <span class="comment">//FLASH_If_Erase(APPLICATION_ADDRESS);</span></div><div class="line">            </div><div class="line">            <span class="keyword">break</span>;</div><div class="line">        </div><div class="line">        <span class="keyword">default</span>:</div><div class="line">            <span class="comment">//Not supported</span></div><div class="line">            <span class="keyword">break</span>;</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">return</span> <span class="number">-1</span>;</div><div class="line">&#125;</div><div class="line"><span class="comment">/**</span></div><div class="line"><span class="comment">  * @brief  Test to see if a key has been pressed on the HyperTerminal</span></div><div class="line"><span class="comment">  * @param  key: The key pressed</span></div><div class="line"><span class="comment">  * @retval 1: Correct</span></div><div class="line"><span class="comment">  *         0: Error</span></div><div class="line"><span class="comment">  */</span></div><div class="line"><span class="keyword">uint32_t</span> SerialKeyPressed(<span class="keyword">uint8_t</span> *key)</div><div class="line">&#123;</div><div class="line">    <span class="keyword">uint8_t</span> err;</div><div class="line">    <span class="keyword">uint8_t</span> ret;</div><div class="line">    </div><div class="line">    <span class="comment">//wait 10ms at most</span></div><div class="line">    ret = comm_read_char(s_ymodem_data.ymodem_uart, <span class="number">2</span>, &amp;err);</div><div class="line"></div><div class="line">    <span class="keyword">if</span>(COMM_NO_ERR == err)&#123;</div><div class="line">        *key = ret;</div><div class="line">        <span class="keyword">return</span> <span class="number">1</span>;</div><div class="line">    &#125; <span class="keyword">else</span> &#123;</div><div class="line">        <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"><span class="comment">//fail - 0xff; success -other value</span></div><div class="line"><span class="keyword">uint8_t</span> SerialReadByte(<span class="keyword">void</span>)&#123;</div><div class="line">    <span class="keyword">uint8_t</span> err;</div><div class="line">    <span class="keyword">uint8_t</span> ret;</div><div class="line">    </div><div class="line">    <span class="comment">//wait 10ms at most</span></div><div class="line">    ret = comm_read_char(s_ymodem_data.ymodem_uart, <span class="number">10</span>, &amp;err);</div><div class="line"></div><div class="line">    <span class="keyword">if</span>(COMM_NO_ERR == err)&#123;</div><div class="line">        <span class="keyword">return</span> ret;</div><div class="line">    &#125; <span class="keyword">else</span> &#123;</div><div class="line">        <span class="keyword">return</span> <span class="number">0xff</span>;</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"><span class="comment">  * @brief  Print a character on the HyperTerminal</span></div><div class="line"><span class="comment">  * @param  c: The character to be printed</span></div><div class="line"><span class="comment">  * @retval None</span></div><div class="line"><span class="comment">  */</span></div><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">SerialPutChar</span><span class="params">(<span class="keyword">uint8_t</span> c)</span></span></div><div class="line"><span class="function"></span>&#123;</div><div class="line">    comm_send_char(s_ymodem_data.ymodem_uart, c, <span class="number">10</span>);  </div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<hr>
+<blockquote>
+<p>参考: <a href="http://ziye334.blog.163.com/blog/static/224306191201481010478799/" target="_blank" rel="external">YModem协议简介</a></p>
+</blockquote>
+
+        
+        </div>
+        <footer class="article-footer">
+            <div class="share-container">
+
+
+
+</div>
+
+    <a data-url="http://yoursite.com/2017/08/14/04-Mcu/[mcu] - Ymodem协议移植/" data-id="cj9f7nm9k000p8soa9dvtu7c0" class="article-share-link"><i class="fa fa-share"></i>Share</a>
+<script>
+    (function ($) {
+        // Prevent duplicate binding
+        if (typeof(__SHARE_BUTTON_BINDED__) === 'undefined' || !__SHARE_BUTTON_BINDED__) {
+            __SHARE_BUTTON_BINDED__ = true;
+        } else {
+            return;
+        }
+        $('body').on('click', function() {
+            $('.article-share-box.on').removeClass('on');
+        }).on('click', '.article-share-link', function(e) {
+            e.stopPropagation();
+
+            var $this = $(this),
+                url = $this.attr('data-url'),
+                encodedUrl = encodeURIComponent(url),
+                id = 'article-share-box-' + $this.attr('data-id'),
+                offset = $this.offset(),
+                box;
+
+            if ($('#' + id).length) {
+                box = $('#' + id);
+
+                if (box.hasClass('on')){
+                    box.removeClass('on');
+                    return;
+                }
+            } else {
+                var html = [
+                    '<div id="' + id + '" class="article-share-box">',
+                        '<input class="article-share-input" value="' + url + '">',
+                        '<div class="article-share-links">',
+                            '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="fa fa-twitter article-share-twitter" target="_blank" title="Twitter"></a>',
+                            '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="fa fa-facebook article-share-facebook" target="_blank" title="Facebook"></a>',
+                            '<a href="http://pinterest.com/pin/create/button/?url=' + encodedUrl + '" class="fa fa-pinterest article-share-pinterest" target="_blank" title="Pinterest"></a>',
+                            '<a href="https://plus.google.com/share?url=' + encodedUrl + '" class="fa fa-google article-share-google" target="_blank" title="Google+"></a>',
+                        '</div>',
+                    '</div>'
+                ].join('');
+
+              box = $(html);
+
+              $('body').append(box);
+            }
+
+            $('.article-share-box.on').hide();
+
+            box.css({
+                top: offset.top + 25,
+                left: offset.left
+            }).addClass('on');
+
+        }).on('click', '.article-share-box', function (e) {
+            e.stopPropagation();
+        }).on('click', '.article-share-box-input', function () {
+            $(this).select();
+        }).on('click', '.article-share-box-link', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            window.open(this.href, 'article-share-box-window-' + Date.now(), 'width=500,height=450');
+        });
+    })(jQuery);
+</script>
+
+            
+    
+
+        </footer>
+    </div>
+    
+        
+<nav id="article-nav">
+    
+        <a href="/2017/09/30/09-Tools/[0] - Hexo+github搭建Blog/" id="article-nav-newer" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">Newer</strong>
+            <div class="article-nav-title">
+                
+                    Hexo + Github搭建Blog
+                
+            </div>
+        </a>
+    
+    
+        <a href="/2017/08/04/04-Mcu/[mcu] - STM32内存结构总结/" id="article-nav-older" class="article-nav-link-wrap">
+            <strong class="article-nav-caption">Older</strong>
+            <div class="article-nav-title">STM32内存结构总结</div>
+        </a>
+    
+</nav>
+
+
+    
+</article>
+
+
+    
+    
+
+</section>
+            
+                
+<aside id="sidebar">
+   
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">tag cloud</h3>
+        <div class="widget tagcloud">
+            <a href="/tags/Heap/" style="font-size: 10px;">Heap</a> <a href="/tags/Iot/" style="font-size: 10px;">Iot</a> <a href="/tags/Lora/" style="font-size: 10px;">Lora</a> <a href="/tags/NB-IOT/" style="font-size: 10px;">NB-IOT</a> <a href="/tags/STACK/" style="font-size: 10px;">STACK</a> <a href="/tags/STM32/" style="font-size: 15px;">STM32</a> <a href="/tags/Ymodem/" style="font-size: 10px;">Ymodem</a> <a href="/tags/dalvik/" style="font-size: 15px;">dalvik</a> <a href="/tags/github/" style="font-size: 10px;">github</a> <a href="/tags/hexo/" style="font-size: 10px;">hexo</a> <a href="/tags/iot/" style="font-size: 15px;">iot</a> <a href="/tags/jvm/" style="font-size: 15px;">jvm</a> <a href="/tags/lora/" style="font-size: 10px;">lora</a> <a href="/tags/nb-iot/" style="font-size: 10px;">nb-iot</a> <a href="/tags/smali/" style="font-size: 10px;">smali</a> <a href="/tags/timer/" style="font-size: 10px;">timer</a> <a href="/tags/ucosiii/" style="font-size: 10px;">ucosiii</a> <a href="/tags/vm/" style="font-size: 20px;">vm</a> <a href="/tags/wifi/" style="font-size: 10px;">wifi</a> <a href="/tags/zigbee/" style="font-size: 10px;">zigbee</a>
+        </div>
+    </div>
+
+    
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">categories</h3>
+        <div class="widget">
+            <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/IOT/">IOT</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/MCU/">MCU</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/TOOL/">TOOL</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/VM/">VM</a><span class="category-list-count">4</span></li></ul>
+        </div>
+    </div>
+
+    
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">archives</h3>
+        <div class="widget">
+            <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/10/">October 2017</a><span class="archive-list-count">5</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/09/">September 2017</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/08/">August 2017</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/07/">July 2017</a><span class="archive-list-count">3</span></li></ul>
+        </div>
+    </div>
+
+    
+        
+    <div class="widget-wrap">
+        <h3 class="widget-title">recent</h3>
+        <div class="widget">
+            <ul id="recent-post" class="">
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/10/26/04-Mcu/[mcu] - UCOSIII-3.04.05定时器Bug/" class="thumbnail">
+    
+    
+        <span style="background-image:url(http://otfz8unl1.bkt.clouddn.com/markdown/171031/43LFEFGHeL.png)" alt="UCOSIII-v3.04.05 定时器Bug" class="thumbnail-image"></span>
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/MCU/">MCU</a></p>
+                            <p class="item-title"><a href="/2017/10/26/04-Mcu/[mcu] - UCOSIII-3.04.05定时器Bug/" class="title">UCOSIII-v3.04.05 定时器Bug</a></p>
+                            <p class="item-date"><time datetime="2017-10-26T10:00:00.000Z" itemprop="datePublished">2017-10-26</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/10/25/02-Vm/[vm] - VM学习工具和资料整理/" class="thumbnail">
+    
+    
+        <span style="background-image:url(http://otfz8unl1.bkt.clouddn.com/markdown/171031/DjHBD0j695.png)" alt="VM学习资料整理" class="thumbnail-image"></span>
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/VM/">VM</a></p>
+                            <p class="item-title"><a href="/2017/10/25/02-Vm/[vm] - VM学习工具和资料整理/" class="title">VM学习资料整理</a></p>
+                            <p class="item-date"><time datetime="2017-10-25T04:00:00.000Z" itemprop="datePublished">2017-10-25</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/10/20/02-Vm/[vm] - Dalvik反编译/" class="thumbnail">
+    
+    
+        <span style="background-image:url(http://otfz8unl1.bkt.clouddn.com/markdown/171031/CK92afFfl2.png)" alt="Dalvik反编译" class="thumbnail-image"></span>
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/VM/">VM</a></p>
+                            <p class="item-title"><a href="/2017/10/20/02-Vm/[vm] - Dalvik反编译/" class="title">Dalvik反编译</a></p>
+                            <p class="item-date"><time datetime="2017-10-20T04:02:00.000Z" itemprop="datePublished">2017-10-20</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/10/20/02-Vm/[vm] - JVM反编译/" class="thumbnail">
+    
+    
+        <span style="background-image:url(http://otfz8unl1.bkt.clouddn.com/markdown/171031/DjHBD0j695.png)" alt="JVM反编译" class="thumbnail-image"></span>
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/VM/">VM</a></p>
+                            <p class="item-title"><a href="/2017/10/20/02-Vm/[vm] - JVM反编译/" class="title">JVM反编译</a></p>
+                            <p class="item-date"><time datetime="2017-10-20T04:00:00.000Z" itemprop="datePublished">2017-10-20</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2017/10/19/02-Vm/[vm] - 理解Dalvik指令码执行原理/" class="thumbnail">
+    
+    
+        <span style="background-image:url(http://otfz8unl1.bkt.clouddn.com/markdown/171031/BmAKL24Fj9.png)" alt="理解Dalvik指令码执行原理" class="thumbnail-image"></span>
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/VM/">VM</a></p>
+                            <p class="item-title"><a href="/2017/10/19/02-Vm/[vm] - 理解Dalvik指令码执行原理/" class="title">理解Dalvik指令码执行原理</a></p>
+                            <p class="item-date"><time datetime="2017-10-19T04:00:00.000Z" itemprop="datePublished">2017-10-19</time></p>
+                        </div>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+
+    
+    <div id="toTop" class="fa fa-angle-up"></div>
+</aside>
+
+            
+        </div>
+        <footer id="footer">
+    <div class="outer">
+        <div id="footer-info" class="inner">
+            &copy; 2017 nix.long<br>
+            Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>. Theme by <a href="http://github.com/ppoffice">PPOffice</a>
+        </div>
+    </div>
+</footer>
+        
+
+
+    
+        <script src="/libs/lightgallery/js/lightgallery.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-thumbnail.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-pager.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-autoplay.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-fullscreen.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-zoom.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-hash.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-share.min.js"></script>
+        <script src="/libs/lightgallery/js/lg-video.min.js"></script>
+    
+    
+        <script src="/libs/justified-gallery/jquery.justifiedGallery.min.js"></script>
+    
+    
+        <script type="text/x-mathjax-config">
+            MathJax.Hub.Config({ tex2jax: { inlineMath: [['$','$'], ['\\(','\\)']] } });
+        </script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+    
+
+
+
+<!-- Custom Scripts -->
+<script src="/js/main.js"></script>
+
+    </div>
+</body>
+</html>
