@@ -3,14 +3,14 @@
 <head>
     <meta charset="utf-8">
     
-    <title>理解Dalvik指令码执行原理 | I&#39;m Long</title>
+    <title>理解Dalvik指令码执行原理 | nix.long</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
     <meta name="description" content="[VM]理解Dalvik指令码执行原理[TOC] 0. Android 源文档Android 在源码4.0的docs目录下，提供了3篇文档: 1) .dex — Dalvik Executable Format - 描述了Dex文件格式2) Bytecode for the Dalvik VM - 描述了Dalvik的字节码指令集3) Dalvik VM Instruction Formats -">
 <meta name="keywords" content="dalvik,vm,smali">
 <meta property="og:type" content="article">
 <meta property="og:title" content="理解Dalvik指令码执行原理">
 <meta property="og:url" content="https://nixlong.github.io/blog/2017/10/19/02-Vm/[vm] - 理解Dalvik指令码执行原理/index.html">
-<meta property="og:site_name" content="I&#39;m Long">
+<meta property="og:site_name" content="nix.long">
 <meta property="og:description" content="[VM]理解Dalvik指令码执行原理[TOC] 0. Android 源文档Android 在源码4.0的docs目录下，提供了3篇文档: 1) .dex — Dalvik Executable Format - 描述了Dex文件格式2) Bytecode for the Dalvik VM - 描述了Dalvik的字节码指令集3) Dalvik VM Instruction Formats -">
 <meta property="og:locale" content="en">
 <meta property="og:image" content="http://otfz8unl1.bkt.clouddn.com/markdown/171031/BmAKL24Fj9.png">
@@ -53,7 +53,7 @@
         <div class="outer">
             <a href="/blog/" id="logo">
                 
-                <span class="site-title">I&#39;m Long</span>
+                <span class="site-title">nix.long</span>
             </a>
             <nav id="main-nav">
                 
@@ -63,19 +63,11 @@
                 
                     <a class="main-nav-link" href="/blog/archives/">Archives</a>
                 
+                    <a class="main-nav-link" href="https://nixlong.github.io/wiki">Wiki</a>
+                
                     <a class="main-nav-link" href="https://nixlong.github.io/about/index.html">About</a>
                 
             </nav>
-            
-                
-                <nav id="sub-nav">
-                    <div class="profile" id="profile-nav">
-                        <a id="profile-anchor" href="javascript:;">
-                            <img class="avatar" src="http://otfz8unl1.bkt.clouddn.com/markdown/171031/D7JIIjACCC.png" />
-                            <i class="fa fa-caret-down"></i>
-                        </a>
-                    </div>
-                </nav>
             
             <div id="search-form-wrap">
 
@@ -126,6 +118,8 @@
                 
                     <td><a class="main-nav-link" href="/blog/archives/">Archives</a></td>
                 
+                    <td><a class="main-nav-link" href="https://nixlong.github.io/wiki">Wiki</a></td>
+                
                     <td><a class="main-nav-link" href="https://nixlong.github.io/about/index.html">About</a></td>
                 
                 <td>
@@ -141,32 +135,6 @@
 </header>
 
         <div class="outer">
-            
-                
-
-<aside id="profile">
-    <div class="inner profile-inner">
-        <div class="base-info profile-block">
-            <img id="avatar" src="http://otfz8unl1.bkt.clouddn.com/markdown/171031/D7JIIjACCC.png" />
-            <h2 id="name">nix.long</h2>
-            <h3 id="title">The Coder</h3>
-            <span id="location"><i class="fa fa-map-marker"></i>ChengDu, China</span>
-            <a id="follow" target="_blank" href="https://github.com/nixlong/">FOLLOW</a>
-        </div>
-        <div class="article-info profile-block">
-            <div class="article-info-block">
-                13
-                <span>posts</span>
-            </div>
-            <div class="article-info-block">
-                24
-                <span>tags</span>
-            </div>
-        </div>
-        
-    </div>
-</aside>
-
             
             <section id="main"><article id="post-02-Vm/[vm] - 理解Dalvik指令码执行原理" class="article article-type-post" itemscope itemprop="blogPost">
     <div class="article-inner">
@@ -369,7 +337,7 @@
 
 </div>
 
-    <a data-url="https://nixlong.github.io/blog/2017/10/19/02-Vm/[vm] - 理解Dalvik指令码执行原理/" data-id="cjaddk7gm000fwcoaylz3tn7r" class="article-share-link"><i class="fa fa-share"></i>Share</a>
+    <a data-url="https://nixlong.github.io/blog/2017/10/19/02-Vm/[vm] - 理解Dalvik指令码执行原理/" data-id="cjadiz6hy000fk8oaxc2cs3l2" class="article-share-link"><i class="fa fa-share"></i>Share</a>
 <script>
     (function ($) {
         // Prevent duplicate binding
