@@ -14,7 +14,7 @@
 <meta property="og:description" content="为多个Git账户配置SSH Key[TOC] 1. Background​    同一台电脑下使用同时使用多个Git账号并的场景是非常频繁的,为了避免反复的输入账号密码访问git repo, 就需要将Git配置为SSH访问方式.不同于单个账号的SSH访问,多个账号SSH访问需要清楚的配置ssh-key 和git账户的对应关系. 2. 前置条件 已安装好git bash工具 已注册拥有多个git账户">
 <meta property="og:locale" content="en">
 <meta property="og:image" content="http://otfz8unl1.bkt.clouddn.com/markdown/171128/2813032lhh.png">
-<meta property="og:updated_time" content="2017-11-28T03:19:08.738Z">
+<meta property="og:updated_time" content="2017-11-28T09:27:27.576Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="为多个Git账户配置SSH Key">
 <meta name="twitter:description" content="为多个Git账户配置SSH Key[TOC] 1. Background​    同一台电脑下使用同时使用多个Git账号并的场景是非常频繁的,为了避免反复的输入账号密码访问git repo, 就需要将Git配置为SSH访问方式.不同于单个账号的SSH访问,多个账号SSH访问需要清楚的配置ssh-key 和git账户的对应关系. 2. 前置条件 已安装好git bash工具 已注册拥有多个git账户">
@@ -254,6 +254,7 @@
 <p>​    然后输入以下文件内容:</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#</span>private GitHub</div><div class="line">Host pri.github.com</div><div class="line">	HostName github.com</div><div class="line">	PreferredAuthentications publickey</div><div class="line">	IdentityFile ~/.ssh/github_pri_rsa</div><div class="line"></div><div class="line"><span class="meta">#</span>private Bitbucket</div><div class="line">Host pri.bitbucket.com</div><div class="line">	HostName bitbucket.com</div><div class="line">	PreferredAuthentications publickey</div><div class="line">	IdentityFile ~/.ssh/bit_pri_rsa</div><div class="line"></div><div class="line"><span class="meta">#</span>public GitHub</div><div class="line">Host pub.github.com</div><div class="line">	HostName github.com</div><div class="line">	PreferredAuthentications publickey</div><div class="line">	IdentityFile ~/.ssh/github_pub_rsa</div></pre></td></tr></table></figure>
 <p>​    配置的关键就在Host, 比如<em>Host pri.github.com</em>这里并不是真实存在的,只是用来区分不同github的一个索引.这个Host下面配置了真实的Hostname, 授权方式以及rsa文件.</p>
+<a id="more"></a>
 <h2 id="5-关联公钥"><a href="#5-关联公钥" class="headerlink" title="5. 关联公钥"></a>5. 关联公钥</h2><p>​    按照第二节账号的分配对应关系, 找到对应公钥文件. 如  <strong>github-private , 注册email: 1111@email.com</strong> 对应生成的 github_pri_rsa.pub.</p>
 <p>​    文本文件打开,复制全部内容, 将其添加到 github 对应账户的 SSH Keys下,如:</p>
 <p><img src="http://otfz8unl1.bkt.clouddn.com/markdown/171128/bDkhL046K7.png" alt=""></p>
@@ -281,7 +282,7 @@
 
 </div>
 
-    <a data-url="https://nixlong.github.io/blog/2017/11/28/09-Tools/1 - 为多个Git账户配置SSH-Key/" data-id="cjajf27ut0000bcoabqvdkeg1" class="article-share-link"><i class="fa fa-share"></i>Share</a>
+    <a data-url="https://nixlong.github.io/blog/2017/11/28/09-Tools/1 - 为多个Git账户配置SSH-Key/" data-id="cjajf7t3j000xnooap0t4dzg4" class="article-share-link"><i class="fa fa-share"></i>Share</a>
 <script>
     (function ($) {
         // Prevent duplicate binding
